@@ -1,31 +1,39 @@
 @echo off
+chcp 65001 >nul 2>&1
 echo ========================================
-echo   AI作文助手 - 启动脚本
+echo   AI Zuo Wen Zhu Shou - Qi Dong Jiao Ben
 echo ========================================
 echo.
 
-echo [1/3] 检查Python环境...
-python --version >nul 2>&1
+echo [1/3] Jian Cha Huan Jing...
+where python >nul 2>&1
 if errorlevel 1 (
-    echo 错误：未找到Python，请先安装Python 3.8+
-    pause
-    exit /b 1
+    where python3 >nul 2>&1
+    if errorlevel 1 (
+        echo Cuo Wu: Wei Zhao Dao Python
+        echo Qing Xian An Zhuang Python 3.8+
+        pause
+        exit /b 1
+    )
+    set PYTHON=python3
+) else (
+    set PYTHON=python
 )
-echo Python环境正常
+
+echo Python Huan Jing Zheng Chang
+echo.
+echo [2/3] An Zhuang Yi Lai...
+%PYTHON% -m pip install -r requirements.txt -q
 
 echo.
-echo [2/3] 安装依赖...
-pip install -r requirements.txt -q
-
-echo.
-echo [3/3] 启动应用...
+echo [3/3] Qi Dong Ying Yong...
 echo.
 echo ========================================
-echo   应用启动成功！
-echo   请在浏览器中访问：http://localhost:5000
-echo   按 Ctrl+C 停止应用
+echo   Ying Yong Qi Dong Cheng Gong!
+echo   Qing Zai Liu Lan Qi Zhong Fang Wen: http://localhost:5000
+echo   An Ctrl+C Ting Zhi Ying Yong
 echo ========================================
 echo.
 
-python app.py
+%PYTHON% app.py
 pause
