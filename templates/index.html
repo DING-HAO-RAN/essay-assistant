@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI作文助手 - 智能写作辅导系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="logo">
+                <div class="logo-icon">✍️</div>
+                <span class="logo-text">AI作文助手</span>
+            </a>
+            <div class="nav-links">
+                <a href="#" class="nav-link active" onclick="showSection('home')">首页</a>
+                <a href="#" class="nav-link" onclick="showSection('guide')">创作指导</a>
+                <a href="#" class="nav-link" onclick="showSection('analyze')">作文分析</a>
+                <a href="#" class="nav-link" onclick="showSection('score')">智能评分</a>
+                <a href="#" class="nav-link" onclick="showSection('materials')">素材推荐</a>
+                <a href="#" class="nav-link" onclick="showSection('gaokao')">高考真题</a>
+                <a href="#" class="nav-link" onclick="showSection('config')">⚙️ 设置</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 首页 -->
+        <section id="section-home" class="fade-in">
+            <div style="text-align: center; padding: 3rem 0;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">
+                    <span style="background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">智能作文辅导</span>
+                </h1>
+                <p style="font-size: 1.2rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+                    基于AI技术，为您提供专业的作文创作指导、智能分析、修改建议和自动评分
+                </p>
+            </div>
+
+            <!-- 功能卡片 -->
+            <div class="features-grid">
+                <div class="feature-card" onclick="showSection('guide')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">📝</div>
+                    <h3 class="feature-title">创作指导</h3>
+                    <p class="feature-desc">输入作文题目，AI为您提供写作思路、素材推荐和结构提纲，助您下笔如有神</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('analyze')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">🔍</div>
+                    <h3 class="feature-title">作文分析</h3>
+                    <p class="feature-desc">全面分析作文的结构、语言、内容、修辞等多个维度，精准定位优点与不足</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('score')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">📊</div>
+                    <h3 class="feature-title">智能评分</h3>
+                    <p class="feature-desc">模拟高考评分标准，给出综合评分和详细评语，了解自己的写作水平</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('materials')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">📚</div>
+                    <h3 class="feature-title">素材推荐</h3>
+                    <p class="feature-desc">根据作文主题，智能推荐名言警句、历史典故、时事素材等写作素材</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('gaokao')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">🎯</div>
+                    <h3 class="feature-title">高考真题</h3>
+                    <p class="feature-desc">2020-2024年高考真题库，提供真题讲解、审题指导和写作练习</p>
+                </div>
+            </div>
+
+            <!-- 配置状态提示 -->
+            <div id="config-alert" class="alert alert-warning" style="margin-top: 2rem; display: none;">
+                <span>⚠️</span>
+                <span>请先<a href="#" onclick="showSection('config')" style="color: var(--warning); text-decoration: underline;">配置AI服务</a>后使用各项功能</span>
+            </div>
+        </section>
+
+        <!-- 创作指导 -->
+        <section id="section-guide" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon purple">📝</div>
+                    <div>
+                        <h2 class="card-title">作文创作指导</h2>
+                        <p class="card-subtitle">输入作文题目，获取专业的写作指导</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文题目</label>
+                    <input type="text" class="form-input" id="guide-topic" placeholder="请输入作文题目，如：谈坚持、我的梦想、论创新">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">文体类型</label>
+                    <select class="form-select" id="guide-genre">
+                        <option value="议论文">议论文</option>
+                        <option value="记叙文">记叙文</option>
+                        <option value="说明文">说明文</option>
+                        <option value="散文">散文</option>
+                        <option value="应用文">应用文</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="getWritingGuide()">
+                    <span>✨</span> 生成写作指导
+                </button>
+
+                <div id="guide-loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI正在为您准备写作指导...</p>
+                </div>
+
+                <div id="guide-result" class="result-container" style="display: none;">
+                    <div class="result-header">
+                        <h3>写作指导</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="copyResult('guide-content')">📋 复制</button>
+                    </div>
+                    <div id="guide-content" class="result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 作文分析 -->
+        <section id="section-analyze" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon blue">🔍</div>
+                    <div>
+                        <h2 class="card-title">作文智能分析</h2>
+                        <p class="card-subtitle">上传作文，获取多维度深度分析</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文题目</label>
+                    <input type="text" class="form-input" id="analyze-title" placeholder="请输入作文题目">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文内容</label>
+                    <textarea class="form-textarea" id="analyze-content" placeholder="请粘贴或输入作文内容..." rows="10"></textarea>
+                    <div style="text-align: right; margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                        字数：<span id="analyze-word-count">0</span> 字
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="analyzeEssay()">
+                        <span>🔍</span> 分析作文
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="comprehensiveEvaluate()">
+                        <span>📊</span> 综合评价（分析+评分+建议）
+                    </button>
+                </div>
+
+                <div id="analyze-loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI正在深度分析作文...</p>
+                </div>
+
+                <div id="analyze-result" class="result-container" style="display: none;">
+                    <div class="result-header">
+                        <h3>分析结果</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" onclick="copyResult('analyze-content')">📋 复制</button>
+                            <button class="btn btn-sm btn-primary" onclick="getRevisionSuggestions()">💡 获取修改建议</button>
+                        </div>
+                    </div>
+                    <div id="analyze-content" class="result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 智能评分 -->
+        <section id="section-score" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon green">📊</div>
+                    <div>
+                        <h2 class="card-title">智能评分</h2>
+                        <p class="card-subtitle">模拟高考评分标准，精准评估作文水平</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文题目</label>
+                    <input type="text" class="form-input" id="score-title" placeholder="请输入作文题目">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文内容</label>
+                    <textarea class="form-textarea" id="score-content" placeholder="请粘贴或输入作文内容..." rows="10"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">满分分数</label>
+                    <select class="form-select" id="score-total">
+                        <option value="60">60分（全国卷）</option>
+                        <option value="70">70分（部分省份）</option>
+                        <option value="50">50分</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="scoreEssay()">
+                    <span>📊</span> 开始评分
+                </button>
+
+                <div id="score-loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI阅卷老师正在评分...</p>
+                </div>
+
+                <div id="score-result" class="result-container" style="display: none;">
+                    <div class="result-header">
+                        <h3>评分结果</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="copyResult('score-content')">📋 复制</button>
+                    </div>
+                    <div id="score-content" class="result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 素材推荐 -->
+        <section id="section-materials" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon orange">📚</div>
+                    <div>
+                        <h2 class="card-title">素材推荐</h2>
+                        <p class="card-subtitle">根据主题智能推荐写作素材</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文主题</label>
+                    <input type="text" class="form-input" id="material-topic" placeholder="请输入作文主题，如：坚持、创新、爱国">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">写作角度（可选）</label>
+                    <input type="text" class="form-input" id="material-angle" placeholder="如：从个人成长角度、从历史角度">
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="getMaterials()">
+                    <span>📚</span> 推荐素材
+                </button>
+
+                <div id="material-loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI正在为您搜集素材...</p>
+                </div>
+
+                <div id="material-result" class="result-container" style="display: none;">
+                    <div class="result-header">
+                        <h3>推荐素材</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="copyResult('material-content')">📋 复制</button>
+                    </div>
+                    <div id="material-content" class="result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 高考真题练习 -->
+        <section id="section-gaokao" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">🎯</div>
+                    <div>
+                        <h2 class="card-title">高考真题练习</h2>
+                        <p class="card-subtitle">2020-2024年高考作文真题，提供详细讲解和写作指导</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">选择年份（可选，不选则随机出题）</label>
+                    <select class="form-select" id="gaokao-year">
+                        <option value="">随机年份</option>
+                        <option value="2024">2024年</option>
+                        <option value="2023">2023年</option>
+                        <option value="2022">2022年</option>
+                        <option value="2021">2021年</option>
+                        <option value="2020">2020年</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="startGaokaoPractice()">
+                    <span>🎯</span> 开始练习
+                </button>
+
+                <!-- 真题列表 -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">历年真题一览</h3>
+                    <div id="gaokao-topics-list" class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));"></div>
+                </div>
+
+                <div id="gaokao-loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI正在准备真题讲解...</p>
+                </div>
+
+                <div id="gaokao-result" class="result-container" style="display: none;">
+                    <div class="result-header">
+                        <h3 id="gaokao-result-title">真题讲解</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="copyResult('gaokao-content')">📋 复制</button>
+                    </div>
+                    <div id="gaokao-content" class="result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 设置页面 -->
+        <section id="section-config" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon purple">⚙️</div>
+                    <div>
+                        <h2 class="card-title">AI服务配置</h2>
+                        <p class="card-subtitle">配置您的AI服务提供商和API密钥</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">选择服务提供商</label>
+                    <select class="form-select" id="config-provider" onchange="updateProviderConfig()">
+                        <option value="">请选择...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <input type="password" class="form-input" id="config-apikey" placeholder="请输入您的API Key">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">API地址（可选，使用自定义服务时填写）</label>
+                    <input type="text" class="form-input" id="config-baseurl" placeholder="留空使用默认地址">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">模型选择</label>
+                    <select class="form-select" id="config-model">
+                        <option value="">请选择服务商后选择模型</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="saveConfig()">
+                        <span>💾</span> 保存配置
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="testConfig()">
+                        <span>🔗</span> 测试连接
+                    </button>
+                </div>
+
+                <div id="config-status" class="config-status" style="display: none;">
+                    <div id="status-dot" class="status-dot"></div>
+                    <span id="status-text">未连接</span>
+                </div>
+
+                <div id="config-alert-box" class="alert" style="display: none; margin-top: 1rem;"></div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="card" style="margin-top: 2rem;">
+                <div class="card-header">
+                    <div class="card-icon blue">📖</div>
+                    <div>
+                        <h2 class="card-title">使用说明</h2>
+                        <p class="card-subtitle">如何获取API Key</p>
+                    </div>
+                </div>
+
+                <div class="result-content">
+                    <h3>支持的服务提供商</h3>
+                    <ul>
+                        <li><strong>OpenAI</strong>：访问 <a href="https://platform.openai.com" target="_blank" style="color: var(--primary-light);">platform.openai.com</a> 注册并获取API Key</li>
+                        <li><strong>Claude</strong>：访问 <a href="https://console.anthropic.com" target="_blank" style="color: var(--primary-light);">console.anthropic.com</a> 注册并获取API Key</li>
+                        <li><strong>DeepSeek</strong>：访问 <a href="https://platform.deepseek.com" target="_blank" style="color: var(--primary-light);">platform.deepseek.com</a> 注册并获取API Key</li>
+                        <li><strong>Moonshot (Kimi)</strong>：访问 <a href="https://platform.moonshot.cn" target="_blank" style="color: var(--primary-light);">platform.moonshot.cn</a> 注册并获取API Key</li>
+                        <li><strong>智谱AI (GLM)</strong>：访问 <a href="https://open.bigmodel.cn" target="_blank" style="color: var(--primary-light);">open.bigmodel.cn</a> 注册并获取API Key</li>
+                        <li><strong>通义千问</strong>：访问 <a href="https://dashscope.aliyun.com" target="_blank" style="color: var(--primary-light);">dashscope.aliyun.com</a> 注册并获取API Key</li>
+                    </ul>
+
+                    <h3>配置步骤</h3>
+                    <ol>
+                        <li>选择您要使用的服务提供商</li>
+                        <li>输入对应的API Key</li>
+                        <li>选择要使用的模型（不同模型效果不同）</li>
+                        <li>点击"测试连接"确认配置正确</li>
+                        <li>点击"保存配置"完成设置</li>
+                    </ol>
+
+                    <h3>注意事项</h3>
+                    <ul>
+                        <li>API Key是您的私密凭证，请勿泄露给他人</li>
+                        <li>不同服务商的API调用可能产生费用，请注意用量</li>
+                        <li>推荐使用DeepSeek或智谱AI，性价比高且中文效果好</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
