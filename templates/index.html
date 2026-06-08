@@ -26,6 +26,7 @@
                 <a href="#" class="nav-link" onclick="showSection('score')">智能评分</a>
                 <a href="#" class="nav-link" onclick="showSection('materials')">素材推荐</a>
                 <a href="#" class="nav-link" onclick="showSection('gaokao')">高考真题</a>
+                <a href="#" class="nav-link" onclick="showSection('database')">📚 数据库</a>
                 <a href="#" class="nav-link" onclick="showSection('config')">⚙️ 设置</a>
             </div>
         </div>
@@ -318,6 +319,102 @@
             </div>
         </section>
 
+        <!-- 数据库管理页面 -->
+        <section id="section-database" style="display: none;" class="fade-in">
+            <!-- 数据库统计 -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <div class="card-icon purple">📊</div>
+                    <div>
+                        <h2 class="card-title">数据库概览</h2>
+                        <p class="card-subtitle">管理作文题目、素材、范文和评分标准</p>
+                    </div>
+                </div>
+                <div id="db-stats" class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));"></div>
+            </div>
+
+            <!-- 数据库标签页 -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchDbTab('topics')">📝 作文题目</div>
+                <div class="tab" onclick="switchDbTab('materials')">📚 素材库</div>
+                <div class="tab" onclick="switchDbTab('essays')">📄 范文库</div>
+                <div class="tab" onclick="switchDbTab('standards')">📏 评分标准</div>
+            </div>
+
+            <!-- 作文题目管理 -->
+            <div id="db-tab-topics" class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>作文题目库</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="showAddTopicModal()">➕ 添加题目</button>
+                        <button class="btn btn-sm btn-secondary" onclick="importTopics()">📥 批量导入</button>
+                        <button class="btn btn-sm btn-secondary" onclick="exportData('topics')">📤 导出</button>
+                    </div>
+                </div>
+                <div id="topics-list"></div>
+            </div>
+
+            <!-- 素材库管理 -->
+            <div id="db-tab-materials" class="card" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>素材库</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-select" id="material-category-filter" onchange="loadMaterials()" style="width: auto;">
+                            <option value="">全部分类</option>
+                            <option value="名言警句">名言警句</option>
+                            <option value="历史典故">历史典故</option>
+                            <option value="人物事迹">人物事迹</option>
+                            <option value="时事素材">时事素材</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <input type="text" class="form-input" id="material-search" placeholder="搜索素材..." style="width: 200px;">
+                        <button class="btn btn-sm btn-primary" onclick="searchMaterials()">🔍</button>
+                        <button class="btn btn-sm btn-primary" onclick="showAddMaterialModal()">➕ 添加素材</button>
+                        <button class="btn btn-sm btn-secondary" onclick="importMaterials()">📥 批量导入</button>
+                        <button class="btn btn-sm btn-secondary" onclick="exportData('materials')">📤 导出</button>
+                    </div>
+                </div>
+                <div id="materials-list"></div>
+            </div>
+
+            <!-- 范文库管理 -->
+            <div id="db-tab-essays" class="card" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>范文库</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-select" id="essay-genre-filter" onchange="loadEssays()" style="width: auto;">
+                            <option value="">全部文体</option>
+                            <option value="议论文">议论文</option>
+                            <option value="记叙文">记叙文</option>
+                            <option value="说明文">说明文</option>
+                            <option value="散文">散文</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" onclick="showAddEssayModal()">➕ 添加范文</button>
+                        <button class="btn btn-sm btn-secondary" onclick="importEssays()">📥 批量导入</button>
+                        <button class="btn btn-sm btn-secondary" onclick="exportData('essays')">📤 导出</button>
+                    </div>
+                </div>
+                <div id="essays-list"></div>
+            </div>
+
+            <!-- 评分标准管理 -->
+            <div id="db-tab-standards" class="card" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>评分标准库</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-select" id="standard-category-filter" onchange="loadStandards()" style="width: auto;">
+                            <option value="">全部类别</option>
+                            <option value="内容">内容</option>
+                            <option value="表达">表达</option>
+                            <option value="发展等级">发展等级</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" onclick="showAddStandardModal()">➕ 添加标准</button>
+                    </div>
+                </div>
+                <div id="standards-list"></div>
+            </div>
+        </section>
+
         <!-- 设置页面 -->
         <section id="section-config" style="display: none;" class="fade-in">
             <div class="card">
@@ -411,6 +508,41 @@
         </section>
     </div>
 
+    <!-- 通用模态框 -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="modal-title" class="modal-title">标题</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div id="modal-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入模态框 -->
+    <div id="import-modal-overlay" class="modal-overlay">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="import-modal-title" class="modal-title">批量导入</h3>
+                <button class="modal-close" onclick="closeImportModal()">✕</button>
+            </div>
+            <div id="import-modal-body">
+                <div class="form-group">
+                    <label class="form-label">JSON数据（数组格式）</label>
+                    <textarea id="import-data" class="form-textarea" rows="10" placeholder='[{"title": "...", "content": "..."}]'></textarea>
+                </div>
+                <div id="import-format-help" class="alert alert-info" style="margin-bottom: 1rem;">
+                    <span>ℹ️</span>
+                    <span id="import-format-text">请按JSON格式输入数据</span>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="doImport()">开始导入</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/main.js"></script>
+    <script src="/static/js/db.js"></script>
 </body>
 </html>

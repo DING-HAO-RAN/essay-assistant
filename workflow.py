@@ -21,7 +21,7 @@ class EssayWorkflow:
     def __init__(self, ai_service: BaseAIService):
         self.ai = ai_service
 
-    def writing_guide_workflow(self, topic: str, genre: str = "议论文") -> Dict[str, Any]:
+    def writing_guide_workflow(self, topic: str, genre: str = "议论文", db_materials: List[Dict] = None) -> Dict[str, Any]:
         """
         作文创作指导工作流
         基于高考真题和满分作文结构优化
@@ -49,6 +49,12 @@ class EssayWorkflow:
 经典事例：
 {chr(10).join('- ' + s for s in theme_materials.get('事例', [])[:3])}
 """
+
+        # 添加数据库素材
+        if db_materials:
+            materials_ref += "\n【数据库素材参考】\n"
+            for m in db_materials[:5]:
+                materials_ref += f"- {m.get('content', '')}（{m.get('source', '未知来源')}）\n"
 
         user_prompt = f"""请为高中{genre}《{topic}》提供详细的写作指导。
 
@@ -120,7 +126,7 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
-    def essay_analysis_workflow(self, title: str, content: str) -> Dict[str, Any]:
+    def essay_analysis_workflow(self, title: str, content: str, db_standards: List[Dict] = None) -> Dict[str, Any]:
         """
         作文分析工作流
         基于高考阅卷标准进行多维度分析
@@ -316,7 +322,7 @@ class EssayWorkflow:
             }
 
     def scoring_workflow(self, title: str, content: str,
-                         total_score: int = 60) -> Dict[str, Any]:
+                         total_score: int = 60, db_standards: List[Dict] = None) -> Dict[str, Any]:
         """
         作文评分工作流
         严格按照高考评分标准进行评分
@@ -432,7 +438,8 @@ class EssayWorkflow:
             }
 
     def comprehensive_workflow(self, title: str, content: str,
-                               genre: str = "议论文") -> Dict[str, Any]:
+                               genre: str = "议论文", db_standards: List[Dict] = None,
+                               db_essays: List[Dict] = None) -> Dict[str, Any]:
         """
         综合工作流：一次性完成分析、评分、建议
         基于高考阅卷标准的全面评价
@@ -556,7 +563,7 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
-    def material_recommendation_workflow(self, topic: str, angle: str = "") -> Dict[str, Any]:
+    def material_recommendation_workflow(self, topic: str, angle: str = "", db_materials: List[Dict] = None) -> Dict[str, Any]:
         """
         素材推荐工作流
         结合高考真题和主题素材库
@@ -648,13 +655,26 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
-    def gaokao_topic_practice_workflow(self, year: str = None) -> Dict[str, Any]:
+    def gaokao_topic_practice_workflow(self, year: str = None, db_topics: List[Dict] = None) -> Dict[str, Any]:
         """
         高考真题练习工作流
         随机选择一道高考真题进行写作指导
         """
-        # 获取一道高考真题
-        topic_info = get_random_topic(year)
+        # 优先使用数据库中的真题
+        if db_topics and len(db_topics) > 0:
+            import random
+            topic_data = random.choice(db_topics)
+            topic_info = {
+                "year": topic_data.get("year", "未知"),
+                "paper": topic_data.get("paper", "未知"),
+                "topic": topic_data.get("title", "未知"),
+                "material": topic_data.get("material", ""),
+                "keywords": topic_data.get("keywords", []),
+                "themes": topic_data.get("themes", [])
+            }
+        else:
+            # 获取一道高考真题
+            topic_info = get_random_topic(year)
 
         system_prompt = """你是一位资深的高考作文辅导教师。
 你需要为学生详细讲解一道高考真题，帮助学生理解题意、掌握写作方法。"""

@@ -5,6 +5,7 @@
 // 全局状态
 let currentConfig = null;
 let providers = [];
+let currentImportType = null;
 
 // API基础URL
 const API_BASE = '';
@@ -29,6 +30,11 @@ async function initApp() {
 
     // 加载高考真题列表
     await loadGaokaoTopics();
+
+    // 加载数据库统计
+    if (typeof loadDbStats === 'function') {
+        await loadDbStats();
+    }
 
     // 配置Marked.js
     if (typeof marked !== 'undefined') {
