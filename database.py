@@ -1,103 +1,218 @@
 """
+==============================================================================
 作文助手数据库模块
-支持存储：作文题目、素材、范文、评分标准
+==============================================================================
+
+本模块负责所有数据的持久化存储，使用SQLite数据库。
+
+数据库包含以下表：
+1. topics - 作文题目表：存储高考真题、模拟题等
+2. materials - 素材表：存储名言警句、典故、事例等写作素材
+3. essays - 范文表：存储优秀作文、满分作文
+4. grading_standards - 评分标准表：存储高考评分细则
+5. user_essays - 用户作文表：存储用户提交的作文记录
+
+设计特点：
+- 使用SQLite，无需额外安装数据库服务
+- 支持JSON格式存储数组数据（如关键词、标签）
+- 提供完整的CRUD操作（增删改查）
+- 支持批量导入和导出
+- 自动生成时间戳
+
+作者：AI大赛参赛项目
+==============================================================================
 """
 
-import sqlite3
-import json
-import os
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+import sqlite3    # SQLite数据库驱动
+import json       # 用于处理JSON数据（序列化数组字段）
+import os         # 用于文件路径操作
+from datetime import datetime  # 时间处理
+from typing import List, Dict, Any, Optional  # 类型注解
 
 
 class EssayDatabase:
-    """作文助手数据库"""
+    """
+    作文助手数据库操作类
+
+    封装了所有数据库操作，包括：
+    - 初始化数据库和表结构
+    - 作文题目的增删改查
+    - 素材的增删改查和搜索
+    - 范文的增删改查
+    - 评分标准的管理
+    - 用户作文记录的管理
+    - 数据统计和导入导出
+
+    使用示例：
+        db = EssayDatabase()  # 自动创建数据库
+        db.add_topic({"title": "谈坚持", "genre": "议论文"})
+        topics = db.get_topics()
+    """
 
     def __init__(self, db_path: str = "data/essay_assistant.db"):
+        """
+        初始化数据库
+
+        参数：
+            db_path: 数据库文件路径（默认为 data/essay_assistant.db）
+
+        工作流程：
+            1. 设置数据库文件路径
+            2. 确保数据目录存在
+            3. 初始化数据库表结构
+        """
         self.db_path = db_path
-        self._ensure_data_dir()
-        self.init_db()
+        self._ensure_data_dir()  # 确保目录存在
+        self.init_db()           # 初始化表结构
 
     def _ensure_data_dir(self):
-        """确保数据目录存在"""
+        """
+        确保数据目录存在
+
+        如果目录不存在，会自动创建
+        exist_ok=True 表示如果目录已存在不会报错
+        """
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
     def get_conn(self):
-        """获取数据库连接"""
+        """
+        获取数据库连接
+
+        返回值：sqlite3.Connection 对象
+
+        特殊设置：
+            conn.row_factory = sqlite3.Row
+            这样查询结果可以通过列名访问，如 row['title']
+            而不是只能通过索引访问 row[0]
+        """
         conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn.row_factory = sqlite3.Row  # 允许通过列名访问
         return conn
 
     def init_db(self):
-        """初始化数据库表"""
+        """
+        初始化数据库表结构
+
+        创建所有需要的表（如果不存在的话）
+        使用 IF NOT EXISTS 确保重复调用不会出错
+
+        表结构说明：
+        - id: 主键，自动递增
+        - created_at: 创建时间，自动填充
+        - updated_at: 更新时间，自动填充
+        - TEXT: 文本类型
+        - INTEGER: 整数类型
+        - TIMESTAMP: 时间戳类型
+        - DEFAULT: 默认值
+        """
         conn = self.get_conn()
         cursor = conn.cursor()
 
-        # 作文题目表
+        # ============================================
+        # 表1：作文题目表 (topics)
+        # ============================================
+        # 存储高考真题、模拟题等作文题目
+        # keywords和themes使用JSON格式存储数组
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS topics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                material TEXT,
-                genre TEXT DEFAULT '议论文',
-                year INTEGER,
-                paper TEXT,
-                keywords TEXT,
-                themes TEXT,
-                difficulty INTEGER DEFAULT 3,
-                notes TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键，自动递增
+                title TEXT NOT NULL,                    -- 题目名称（必填）
+                material TEXT,                          -- 作文材料/要求
+                genre TEXT DEFAULT '议论文',            -- 文体类型，默认议论文
+                year INTEGER,                           -- 年份（如2024）
+                paper TEXT,                             -- 试卷名称（如"全国甲卷"）
+                keywords TEXT,                          -- 关键词，JSON数组格式
+                themes TEXT,                            -- 主题标签，JSON数组格式
+                difficulty INTEGER DEFAULT 3,           -- 难度等级（1-5），默认3
+                notes TEXT,                             -- 备注
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- 更新时间
             )
         ''')
 
-        # 作文素材表
+        # ============================================
+        # 表2：素材表 (materials)
+        # ============================================
+        # 存储写作素材：名言警句、历史典故、人物事迹、时事素材等
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS materials (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                category TEXT NOT NULL,
-                subcategory TEXT,
-                content TEXT NOT NULL,
-                source TEXT,
-                author TEXT,
-                theme TEXT,
-                usage_guide TEXT,
-                example TEXT,
-                tags TEXT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键
+                category TEXT NOT NULL,                 -- 分类（必填）：名言警句/历史典故/人物事迹/时事素材
+                subcategory TEXT,                       -- 子分类
+                content TEXT NOT NULL,                  -- 素材内容（必填）
+                source TEXT,                            -- 来源（如《论语》）
+                author TEXT,                            -- 作者（如孔子）
+                theme TEXT,                             -- 适用主题（如坚持、创新）
+                usage_guide TEXT,                       -- 使用指南
+                example TEXT,                           -- 使用示例
+                tags TEXT,                              -- 标签，JSON数组格式
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
 
-        # 作文范文表
+        # ============================================
+        # 表3：范文表 (essays)
+        # ============================================
+        # 存储优秀作文、满分作文
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS essays (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                genre TEXT DEFAULT '议论文',
-                topic_id INTEGER,
-                score INTEGER,
-                grade TEXT,
-                source TEXT,
-                highlights TEXT,
-                analysis TEXT,
-                tags TEXT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键
+                title TEXT NOT NULL,                    -- 范文标题（必填）
+                content TEXT NOT NULL,                  -- 范文内容（必填）
+                genre TEXT DEFAULT '议论文',            -- 文体类型
+                topic_id INTEGER,                       -- 关联的题目ID（外键）
+                score INTEGER,                          -- 评分（如55分）
+                grade TEXT,                             -- 等级（如"优秀作文"）
+                source TEXT,                            -- 来源（如"2024年高考满分作文"）
+                highlights TEXT,                        -- 亮点分析
+                analysis TEXT,                          -- 详细分析
+                tags TEXT,                              -- 标签，JSON数组格式
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (topic_id) REFERENCES topics(id)  -- 外键关联题目表
+            )
+        ''')
+
+        # ============================================
+        # 表4：评分标准表 (grading_standards)
+        # ============================================
+        # 存储高考评分标准和细则
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS grading_standards (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键
+                name TEXT NOT NULL,                     -- 标准名称（必填）如"内容一等"
+                category TEXT NOT NULL,                 -- 类别（必填）如"内容"/"表达"/"发展等级"
+                level INTEGER,                          -- 等级（1-4，1为最高）
+                score_range TEXT,                       -- 分数范围（如"20-16"）
+                description TEXT,                       -- 描述
+                criteria TEXT,                          -- 详细评分细则
+                examples TEXT,                          -- 示例
+                is_default BOOLEAN DEFAULT 0,           -- 是否为系统默认标准
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # ============================================
+        # 表5：用户作文记录表 (user_essays)
+        # ============================================
+        # 存储用户提交的作文和评分结果
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_essays (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键
+                title TEXT NOT NULL,                    -- 作文标题（必填）
+                content TEXT NOT NULL,                  -- 作文内容（必填）
+                genre TEXT DEFAULT '议论文',            -- 文体类型
+                topic_id INTEGER,                       -- 关联的题目ID
+                score INTEGER,                          -- 评分
+                analysis TEXT,                          -- 分析结果
+                suggestions TEXT,                       -- 修改建议
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (topic_id) REFERENCES topics(id)
             )
         ''')
-
-        # 评分标准表
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS grading_standards (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                category TEXT NOT NULL,
-                level INTEGER,
-                score_range TEXT,
-                description TEXT,
                 criteria TEXT,
                 examples TEXT,
                 is_default BOOLEAN DEFAULT 0,

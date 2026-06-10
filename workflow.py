@@ -1,44 +1,109 @@
 """
+==============================================================================
 作文助手工作流引擎
-包含作文创作指导、分析、修改建议、评分等工作流
-基于高考真题和评分标准优化
+==============================================================================
+
+本模块是系统的核心业务逻辑层，负责：
+1. 定义各种作文相关的工作流（创作指导、分析、评分等）
+2. 构建专业的AI提示词（Prompt）
+3. 整合数据库素材和评分标准
+4. 调用AI服务并返回结果
+
+工作流设计原则：
+- 每个工作流都是一个独立的方法
+- 提示词基于高考评分标准和满分作文结构优化
+- 支持从数据库获取素材和评分标准
+- 返回统一格式的结果（success + data/error）
+
+作者：AI大赛参赛项目
+==============================================================================
 """
 
-from typing import Dict, Any, List, Optional
-from ai_service import BaseAIService
-from gaokao_data import (
-    GAOKAO_TOPICS, GRADING_STANDARDS, EXCELLENT_ESSAY_TEMPLATES,
-    THEME_MATERIALS, get_random_topic, get_topics_by_theme,
-    get_materials_by_theme, format_grading_standards
+from typing import Dict, Any, List, Optional  # 类型注解
+from ai_service import BaseAIService  # AI服务基类
+from gaokao_data import (  # 高考数据
+    GAOKAO_TOPICS,           # 高考真题
+    GRADING_STANDARDS,       # 评分标准
+    EXCELLENT_ESSAY_TEMPLATES,  # 满分作文模板
+    THEME_MATERIALS,         # 主题素材
+    get_random_topic,        # 随机获取真题
+    get_topics_by_theme,     # 按主题获取真题
+    get_materials_by_theme,  # 按主题获取素材
+    format_grading_standards # 格式化评分标准
 )
 import json
 import re
 
 
 class EssayWorkflow:
-    """作文助手工作流引擎"""
+    """
+    作文助手工作流引擎类
+
+    包含以下工作流：
+    1. writing_guide_workflow - 创作指导工作流
+    2. essay_analysis_workflow - 作文分析工作流
+    3. revision_suggestion_workflow - 修改建议工作流
+    4. scoring_workflow - 智能评分工作流
+    5. comprehensive_workflow - 综合评价工作流
+    6. material_recommendation_workflow - 素材推荐工作流
+    7. gaokao_topic_practice_workflow - 高考真题练习工作流
+
+    每个工作流都遵循相同的模式：
+    1. 构建系统提示词（定义AI的角色和行为）
+    2. 构建用户提示词（包含具体任务和要求）
+    3. 调用AI服务获取回复
+    4. 返回统一格式的结果
+    """
 
     def __init__(self, ai_service: BaseAIService):
+        """
+        初始化工作流引擎
+
+        参数：
+            ai_service: AI服务实例（如OpenAIService、ClaudeService等）
+        """
         self.ai = ai_service
 
-    def writing_guide_workflow(self, topic: str, genre: str = "议论文", db_materials: List[Dict] = None) -> Dict[str, Any]:
+    # ============================================
+    # 工作流1：创作指导
+    # ============================================
+
+    def writing_guide_workflow(self, topic: str, genre: str = "议论文",
+                               db_materials: List[Dict] = None) -> Dict[str, Any]:
         """
         作文创作指导工作流
-        基于高考真题和满分作文结构优化
+
+        功能：根据作文题目，生成详细的写作指导
+        包括：审题指导、写作思路、结构提纲、素材推荐、高分技巧等
+
+        参数：
+            topic: 作文题目（如"谈坚持"）
+            genre: 文体类型（默认"议论文"）
+            db_materials: 从数据库获取的相关素材（可选）
+
+        返回值：
+            成功：{"success": True, "topic": "...", "genre": "...", "guide": "指导内容"}
+            失败：{"success": False, "error": "错误信息"}
+
+        工作原理：
+            1. 获取相关主题的高考真题和素材作为参考
+            2. 构建专业的提示词，包含满分作文结构模板
+            3. 调用AI生成写作指导
         """
         # 获取相关主题的高考真题和素材
-        related_topics = get_topics_by_theme(topic[:2])  # 简单匹配
+        related_topics = get_topics_by_theme(topic[:2])
         theme_materials = get_materials_by_theme(topic[:2])
 
         # 获取满分作文结构模板
         template = EXCELLENT_ESSAY_TEMPLATES.get(genre, EXCELLENT_ESSAY_TEMPLATES["议论文"])
 
+        # 系统提示词：定义AI的角色和行为
         system_prompt = """你是一位资深的高中语文教师，拥有20年作文教学经验，曾多次参加高考阅卷。
 你需要为学生提供专业、实用的作文写作指导。
 指导要基于高考评分标准，帮助学生写出高分作文。
 请用清晰的结构、具体的例子来帮助学生理解。"""
 
-        # 构建素材参考
+        # 构建素材参考（从内置素材库）
         materials_ref = ""
         if theme_materials:
             materials_ref = f"""
@@ -56,6 +121,7 @@ class EssayWorkflow:
             for m in db_materials[:5]:
                 materials_ref += f"- {m.get('content', '')}（{m.get('source', '未知来源')}）\n"
 
+        # 用户提示词：包含具体任务和要求
         user_prompt = f"""请为高中{genre}《{topic}》提供详细的写作指导。
 
 【满分作文结构参考】（{genre}）
@@ -107,11 +173,13 @@ class EssayWorkflow:
 
 请用Markdown格式输出，结构清晰，便于学生阅读和使用。"""
 
+        # 构建消息列表
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ]
 
+        # 调用AI服务
         try:
             result = self.ai.chat(messages, temperature=0.8, max_tokens=3500)
             return {
@@ -126,18 +194,36 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
-    def essay_analysis_workflow(self, title: str, content: str, db_standards: List[Dict] = None) -> Dict[str, Any]:
+    # ============================================
+    # 工作流2：作文分析
+    # ============================================
+
+    def essay_analysis_workflow(self, title: str, content: str,
+                                db_standards: List[Dict] = None) -> Dict[str, Any]:
         """
         作文分析工作流
-        基于高考阅卷标准进行多维度分析
+
+        功能：对作文进行多维度深度分析
+        分析维度：审题立意、内容、结构、语言、修辞、思辨性等
+
+        参数：
+            title: 作文标题
+            content: 作文内容
+            db_standards: 数据库中的评分标准（可选）
+
+        返回值：
+            成功：{"success": True, "title": "...", "word_count": 800, "analysis": "分析结果"}
         """
+        # 统计字数（不计算空格和换行）
         word_count = len(content.replace(" ", "").replace("\n", ""))
 
+        # 系统提示词
         system_prompt = """你是一位专业的高考作文阅卷专家，拥有丰富的阅卷经验。
 你需要对学生的作文进行全面、客观、专业的分析。
 分析要严格按照高考评分标准，有理有据，指出优点和不足。
 语言要专业但易懂，给学生明确的改进方向。"""
 
+        # 用户提示词
         user_prompt = f"""请按照高考作文阅卷标准，对以下高中作文进行全面分析：
 
 【作文题目】{title}
@@ -218,17 +304,29 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
+    # ============================================
+    # 工作流3：修改建议
+    # ============================================
+
     def revision_suggestion_workflow(self, title: str, content: str,
                                      analysis: str = "") -> Dict[str, Any]:
         """
         修改建议工作流
-        基于高考评分标准提供具体可操作的修改方案
+
+        功能：针对作文中的问题，提供具体可操作的修改方案
+        特点：给出修改前后的对比示例，让学生清楚知道如何改进
+
+        参数：
+            title: 作文标题
+            content: 作文内容
+            analysis: 之前的分析结果（用于生成更有针对性的建议）
         """
         system_prompt = """你是一位耐心细致的语文教师，擅长指导学生修改作文以提升分数。
 你需要针对学生作文中的问题，给出具体、可操作的修改建议。
 建议要详细，最好能给出修改前后的对比示例，让学生清楚知道如何改进。
 重点关注能快速提分的修改点。"""
 
+        # 如果有之前的分析结果，添加到上下文中
         analysis_context = ""
         if analysis:
             analysis_context = f"""
@@ -321,11 +419,24 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
+    # ============================================
+    # 工作流4：智能评分
+    # ============================================
+
     def scoring_workflow(self, title: str, content: str,
-                         total_score: int = 60, db_standards: List[Dict] = None) -> Dict[str, Any]:
+                         total_score: int = 60,
+                         db_standards: List[Dict] = None) -> Dict[str, Any]:
         """
-        作文评分工作流
-        严格按照高考评分标准进行评分
+        智能评分工作流
+
+        功能：严格按照高考评分标准对作文进行评分
+        评分维度：基础等级（内容+表达）+ 发展等级 - 扣分项
+
+        参数：
+            title: 作文标题
+            content: 作文内容
+            total_score: 满分分数（默认60分）
+            db_standards: 数据库中的评分标准
         """
         word_count = len(content.replace(" ", "").replace("\n", ""))
 
@@ -334,7 +445,7 @@ class EssayWorkflow:
 评分要有明确的依据，每项扣分都要说明理由。
 评语要具体、有建设性，帮助学生了解自己的水平和改进方向。"""
 
-        # 获取评分标准
+        # 获取评分标准文本
         grading_standards = format_grading_standards()
 
         user_prompt = f"""请严格按照高考作文评分标准，对以下作文进行评分：
@@ -410,12 +521,7 @@ class EssayWorkflow:
 - 中期提升方向：
 - 长期发展目标：
 
-## 七、各分数段对标分析
-- 当前处于哪个分数段
-- 与上一档分数段的差距在哪里
-- 如何突破到更高分数段
-
-请严格按照评分标准打分，评语要具体、有建设性。不要过于宽松或过于严格。"""
+请严格按照评分标准打分，评语要具体、有建设性。"""
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -437,12 +543,26 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
+    # ============================================
+    # 工作流5：综合评价
+    # ============================================
+
     def comprehensive_workflow(self, title: str, content: str,
-                               genre: str = "议论文", db_standards: List[Dict] = None,
+                               genre: str = "议论文",
+                               db_standards: List[Dict] = None,
                                db_essays: List[Dict] = None) -> Dict[str, Any]:
         """
-        综合工作流：一次性完成分析、评分、建议
-        基于高考阅卷标准的全面评价
+        综合评价工作流
+
+        功能：一次性完成作文分析、评分、修改建议（最全面的评价）
+        相当于同时调用分析、评分、建议三个工作流
+
+        参数：
+            title: 作文标题
+            content: 作文内容
+            genre: 文体类型
+            db_standards: 评分标准
+            db_essays: 优秀范文（用于参考对比）
         """
         word_count = len(content.replace(" ", "").replace("\n", ""))
 
@@ -451,7 +571,6 @@ class EssayWorkflow:
 评价要基于高考评分标准，专业、客观、有建设性。
 请用专业但易懂的语言，给出有深度、有指导意义的评价。"""
 
-        # 获取评分标准
         grading_standards = format_grading_standards()
 
         user_prompt = f"""请按照高考阅卷标准，对以下高中{genre}进行综合评价：
@@ -563,12 +682,24 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
-    def material_recommendation_workflow(self, topic: str, angle: str = "", db_materials: List[Dict] = None) -> Dict[str, Any]:
+    # ============================================
+    # 工作流6：素材推荐
+    # ============================================
+
+    def material_recommendation_workflow(self, topic: str, angle: str = "",
+                                          db_materials: List[Dict] = None) -> Dict[str, Any]:
         """
         素材推荐工作流
-        结合高考真题和主题素材库
+
+        功能：根据作文主题推荐相关素材
+        包括：名言警句、历史典故、人物事迹、时事素材等
+
+        参数：
+            topic: 作文主题
+            angle: 写作角度（可选）
+            db_materials: 数据库中的相关素材
         """
-        # 获取相关主题的素材
+        # 获取主题素材
         theme_materials = get_materials_by_theme(topic[:2])
 
         system_prompt = """你是一位博学的语文教师，拥有丰富的文学和历史知识。
@@ -590,6 +721,12 @@ class EssayWorkflow:
 {chr(10).join('- ' + s for s in theme_materials.get('事例', []))}
 
 请在此基础上补充更多素材，并详细说明使用方法。"""
+
+        # 添加数据库素材
+        if db_materials:
+            existing_materials += "\n【数据库素材】\n"
+            for m in db_materials[:5]:
+                existing_materials += f"- {m.get('content', '')}（{m.get('source', '')}）\n"
 
         angle_context = f"\n写作角度：{angle}" if angle else ""
 
@@ -625,15 +762,10 @@ class EssayWorkflow:
 - 可论证的观点
 - 使用建议
 
-## 5. 高考真题关联
-- 哪些高考真题可以用这些素材
-- 满分作文中如何使用类似素材
-
-## 6. 素材使用技巧
-- 如何自然地引入素材（给出3种开头方式）
+## 5. 素材使用技巧
+- 如何自然地引入素材
 - 如何分析素材与论点的关系
 - 避免素材堆砌的技巧
-- 素材的详略处理
 
 请用Markdown格式输出，确保素材准确、实用。"""
 
@@ -655,10 +787,21 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
-    def gaokao_topic_practice_workflow(self, year: str = None, db_topics: List[Dict] = None) -> Dict[str, Any]:
+    # ============================================
+    # 工作流7：高考真题练习
+    # ============================================
+
+    def gaokao_topic_practice_workflow(self, year: str = None,
+                                        db_topics: List[Dict] = None) -> Dict[str, Any]:
         """
         高考真题练习工作流
-        随机选择一道高考真题进行写作指导
+
+        功能：随机或按年份选择高考真题，提供详细的写作指导
+        包括：题目解读、审题指导、写作思路、满分结构、推荐素材等
+
+        参数：
+            year: 年份（可选）
+            db_topics: 数据库中的真题
         """
         # 优先使用数据库中的真题
         if db_topics and len(db_topics) > 0:
@@ -673,7 +816,7 @@ class EssayWorkflow:
                 "themes": topic_data.get("themes", [])
             }
         else:
-            # 获取一道高考真题
+            # 使用内置的高考真题数据
             topic_info = get_random_topic(year)
 
         system_prompt = """你是一位资深的高考作文辅导教师。
@@ -744,32 +887,61 @@ class EssayWorkflow:
 
 
 class WorkflowProgress:
-    """工作流进度追踪"""
+    """
+    工作流进度追踪类
+
+    用于追踪长时间运行的工作流的进度
+    可以显示当前步骤、总步骤数、进度百分比等信息
+
+    使用示例：
+        progress = WorkflowProgress()
+        progress.start(["步骤1", "步骤2", "步骤3"])
+        progress.next_step()  # 进入步骤1
+        progress.next_step()  # 进入步骤2
+        print(progress.get_progress())  # 获取当前进度
+    """
 
     def __init__(self):
-        self.steps = []
-        self.current_step = 0
-        self.total_steps = 0
+        """初始化进度追踪器"""
+        self.steps = []           # 步骤列表
+        self.current_step = 0     # 当前步骤索引
+        self.total_steps = 0      # 总步骤数
 
     def start(self, steps: List[str]):
-        """开始追踪"""
+        """
+        开始追踪
+
+        参数：
+            steps: 步骤名称列表
+        """
         self.steps = steps
         self.total_steps = len(steps)
         self.current_step = 0
 
     def next_step(self, result: Any = None):
-        """进入下一步"""
+        """
+        进入下一步
+
+        参数：
+            result: 当前步骤的结果（可选）
+
+        返回值：包含进度信息的字典
+        """
         self.current_step += 1
         return {
-            "progress": self.current_step / self.total_steps * 100,
-            "current": self.current_step,
-            "total": self.total_steps,
+            "progress": self.current_step / self.total_steps * 100,  # 进度百分比
+            "current": self.current_step,   # 当前步骤
+            "total": self.total_steps,      # 总步骤数
             "step": self.steps[self.current_step - 1] if self.current_step <= self.total_steps else "完成",
             "result": result
         }
 
     def get_progress(self) -> Dict[str, Any]:
-        """获取当前进度"""
+        """
+        获取当前进度
+
+        返回值：包含进度信息的字典
+        """
         return {
             "progress": self.current_step / self.total_steps * 100 if self.total_steps > 0 else 0,
             "current": self.current_step,
