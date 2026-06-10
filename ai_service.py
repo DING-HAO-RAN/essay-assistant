@@ -22,7 +22,7 @@ AI服务接口模块 - 通用AI服务调用层
 - 通义千问（阿里云）
 - 任何兼容OpenAI格式的自定义服务
 
-作者：AI大赛参赛项目
+作者：ding-hao-ran
 ==============================================================================
 """
 
@@ -458,6 +458,7 @@ class AIServiceFactory:
                 - "moonshot"：月之暗面/Kimi
                 - "zhipu"：智谱AI GLM系列
                 - "qwen"：通义千问
+                - "mimo"：小米MiMo（通过硅基流动等平台）
                 - "custom"：自定义OpenAI兼容服务
             api_key: API密钥
             **kwargs: 其他可选参数
@@ -519,6 +520,15 @@ class AIServiceFactory:
                 model=kwargs.get("model", "qwen-turbo")
             )
 
+        elif provider == "mimo":
+            # 小米MiMo服务（通过硅基流动等平台调用，兼容OpenAI格式）
+            # 支持token-plan计费模式
+            return OpenAIService(
+                api_key=api_key,
+                base_url=kwargs.get("base_url", "https://api.siliconflow.cn/v1"),
+                model=kwargs.get("model", "MiMo-7B-RL")
+            )
+
         elif provider == "custom":
             # 自定义OpenAI兼容服务
             if "base_url" not in kwargs:
@@ -576,6 +586,12 @@ PROVIDER_CONFIGS = {
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "models": ["qwen-turbo", "qwen-plus", "qwen-max"],
         "default_model": "qwen-turbo"
+    },
+    "mimo": {
+        "name": "小米MiMo (token-plan)",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "models": ["MiMo-7B-RL", "MiMo-7B-Base"],
+        "default_model": "MiMo-7B-RL"
     }
 }
 
