@@ -19,7 +19,7 @@
 - 支持批量导入和导出
 - 自动生成时间戳
 
-作者：AI大赛参赛项目
+作者：ding-hao-ran
 ==============================================================================
 """
 
@@ -213,30 +213,6 @@ class EssayDatabase:
                 FOREIGN KEY (topic_id) REFERENCES topics(id)
             )
         ''')
-                criteria TEXT,
-                examples TEXT,
-                is_default BOOLEAN DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        # 用户作文记录表
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_essays (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                genre TEXT DEFAULT '议论文',
-                topic_id INTEGER,
-                score INTEGER,
-                analysis TEXT,
-                suggestions TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (topic_id) REFERENCES topics(id)
-            )
-        ''')
 
         conn.commit()
         conn.close()
@@ -245,8 +221,8 @@ class EssayDatabase:
     # 作文题目操作
     # ============================================
 
-    def add_topic(self, data: Dict[str, Any]) -> int:
-        """添加作文题目"""
+    def add_topic(self, data: Dict[str, Any]) -> Optional[int]:
+        """添加作文题目，返回新记录的ID"""
         conn = self.get_conn()
         cursor = conn.cursor()
 
@@ -254,15 +230,15 @@ class EssayDatabase:
             INSERT INTO topics (title, material, genre, year, paper, keywords, themes, difficulty, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('title'),
-            data.get('material'),
+            data.get('title', ''),
+            data.get('material', ''),
             data.get('genre', '议论文'),
             data.get('year'),
-            data.get('paper'),
+            data.get('paper', ''),
             json.dumps(data.get('keywords', []), ensure_ascii=False),
             json.dumps(data.get('themes', []), ensure_ascii=False),
             data.get('difficulty', 3),
-            data.get('notes')
+            data.get('notes', '')
         ))
 
         topic_id = cursor.lastrowid
@@ -270,7 +246,7 @@ class EssayDatabase:
         conn.close()
         return topic_id
 
-    def get_topics(self, genre: str = None, year: int = None, limit: int = 100) -> List[Dict]:
+    def get_topics(self, genre: Optional[str] = None, year: Optional[int] = None, limit: int = 100) -> List[Dict]:
         """获取作文题目列表"""
         conn = self.get_conn()
         cursor = conn.cursor()
@@ -292,7 +268,7 @@ class EssayDatabase:
         rows = cursor.fetchall()
         conn.close()
 
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def get_topic_by_id(self, topic_id: int) -> Optional[Dict]:
         """根据ID获取作文题目"""
@@ -347,8 +323,8 @@ class EssayDatabase:
     # 作文素材操作
     # ============================================
 
-    def add_material(self, data: Dict[str, Any]) -> int:
-        """添加作文素材"""
+    def add_material(self, data: Dict[str, Any]) -> Optional[int]:
+        """添加作文素材，返回新记录的ID"""
         conn = self.get_conn()
         cursor = conn.cursor()
 
@@ -356,14 +332,14 @@ class EssayDatabase:
             INSERT INTO materials (category, subcategory, content, source, author, theme, usage_guide, example, tags)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('category'),
-            data.get('subcategory'),
-            data.get('content'),
-            data.get('source'),
-            data.get('author'),
-            data.get('theme'),
-            data.get('usage_guide'),
-            data.get('example'),
+            data.get('category', ''),
+            data.get('subcategory', ''),
+            data.get('content', ''),
+            data.get('source', ''),
+            data.get('author', ''),
+            data.get('theme', ''),
+            data.get('usage_guide', ''),
+            data.get('example', ''),
             json.dumps(data.get('tags', []), ensure_ascii=False)
         ))
 
@@ -372,7 +348,7 @@ class EssayDatabase:
         conn.close()
         return material_id
 
-    def get_materials(self, category: str = None, theme: str = None, limit: int = 100) -> List[Dict]:
+    def get_materials(self, category: Optional[str] = None, theme: Optional[str] = None, limit: int = 100) -> List[Dict]:
         """获取素材列表"""
         conn = self.get_conn()
         cursor = conn.cursor()
@@ -394,7 +370,7 @@ class EssayDatabase:
         rows = cursor.fetchall()
         conn.close()
 
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def get_material_by_id(self, material_id: int) -> Optional[Dict]:
         """根据ID获取素材"""
@@ -419,7 +395,7 @@ class EssayDatabase:
         rows = cursor.fetchall()
         conn.close()
 
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def update_material(self, material_id: int, data: Dict[str, Any]) -> bool:
         """更新素材"""
@@ -461,8 +437,8 @@ class EssayDatabase:
     # 作文范文操作
     # ============================================
 
-    def add_essay(self, data: Dict[str, Any]) -> int:
-        """添加范文"""
+    def add_essay(self, data: Dict[str, Any]) -> Optional[int]:
+        """添加范文，返回新记录的ID"""
         conn = self.get_conn()
         cursor = conn.cursor()
 
@@ -470,15 +446,15 @@ class EssayDatabase:
             INSERT INTO essays (title, content, genre, topic_id, score, grade, source, highlights, analysis, tags)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('title'),
-            data.get('content'),
+            data.get('title', ''),
+            data.get('content', ''),
             data.get('genre', '议论文'),
             data.get('topic_id'),
             data.get('score'),
-            data.get('grade'),
-            data.get('source'),
-            data.get('highlights'),
-            data.get('analysis'),
+            data.get('grade', ''),
+            data.get('source', ''),
+            data.get('highlights', ''),
+            data.get('analysis', ''),
             json.dumps(data.get('tags', []), ensure_ascii=False)
         ))
 
@@ -487,7 +463,7 @@ class EssayDatabase:
         conn.close()
         return essay_id
 
-    def get_essays(self, genre: str = None, topic_id: int = None, min_score: int = None, limit: int = 100) -> List[Dict]:
+    def get_essays(self, genre: Optional[str] = None, topic_id: Optional[int] = None, min_score: Optional[int] = None, limit: int = 100) -> List[Dict]:
         """获取范文列表"""
         conn = self.get_conn()
         cursor = conn.cursor()
@@ -512,7 +488,7 @@ class EssayDatabase:
         rows = cursor.fetchall()
         conn.close()
 
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def get_essay_by_id(self, essay_id: int) -> Optional[Dict]:
         """根据ID获取范文"""
@@ -563,8 +539,8 @@ class EssayDatabase:
     # 评分标准操作
     # ============================================
 
-    def add_grading_standard(self, data: Dict[str, Any]) -> int:
-        """添加评分标准"""
+    def add_grading_standard(self, data: Dict[str, Any]) -> Optional[int]:
+        """添加评分标准，返回新记录的ID"""
         conn = self.get_conn()
         cursor = conn.cursor()
 
@@ -572,13 +548,13 @@ class EssayDatabase:
             INSERT INTO grading_standards (name, category, level, score_range, description, criteria, examples, is_default)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('name'),
-            data.get('category'),
+            data.get('name', ''),
+            data.get('category', ''),
             data.get('level'),
-            data.get('score_range'),
-            data.get('description'),
-            data.get('criteria'),
-            data.get('examples'),
+            data.get('score_range', ''),
+            data.get('description', ''),
+            data.get('criteria', ''),
+            data.get('examples', ''),
             data.get('is_default', 0)
         ))
 
@@ -587,7 +563,7 @@ class EssayDatabase:
         conn.close()
         return standard_id
 
-    def get_grading_standards(self, category: str = None) -> List[Dict]:
+    def get_grading_standards(self, category: Optional[str] = None) -> List[Dict]:
         """获取评分标准列表"""
         conn = self.get_conn()
         cursor = conn.cursor()
@@ -605,7 +581,7 @@ class EssayDatabase:
         rows = cursor.fetchall()
         conn.close()
 
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def update_grading_standard(self, standard_id: int, data: Dict[str, Any]) -> bool:
         """更新评分标准"""
@@ -643,8 +619,8 @@ class EssayDatabase:
     # 用户作文记录操作
     # ============================================
 
-    def save_user_essay(self, data: Dict[str, Any]) -> int:
-        """保存用户作文"""
+    def save_user_essay(self, data: Dict[str, Any]) -> Optional[int]:
+        """保存用户作文，返回新记录的ID"""
         conn = self.get_conn()
         cursor = conn.cursor()
 
@@ -652,13 +628,13 @@ class EssayDatabase:
             INSERT INTO user_essays (title, content, genre, topic_id, score, analysis, suggestions)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('title'),
-            data.get('content'),
+            data.get('title', ''),
+            data.get('content', ''),
             data.get('genre', '议论文'),
             data.get('topic_id'),
             data.get('score'),
-            data.get('analysis'),
-            data.get('suggestions')
+            data.get('analysis', ''),
+            data.get('suggestions', '')
         ))
 
         essay_id = cursor.lastrowid
@@ -673,7 +649,7 @@ class EssayDatabase:
         cursor.execute("SELECT * FROM user_essays ORDER BY created_at DESC LIMIT ?", (limit,))
         rows = cursor.fetchall()
         conn.close()
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def delete_user_essay(self, essay_id: int) -> bool:
         """删除用户作文"""
@@ -788,7 +764,7 @@ class EssayDatabase:
     # 辅助方法
     # ============================================
 
-    def _row_to_dict(self, row) -> Dict:
+    def _row_to_dict(self, row) -> Optional[Dict]:
         """将数据库行转换为字典"""
         if row is None:
             return None
@@ -812,7 +788,7 @@ class EssayDatabase:
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
         conn.close()
-        return [self._row_to_dict(row) for row in rows]
+        return [d for row in rows if (d := self._row_to_dict(row)) is not None]
 
     def import_data(self, table: str, data: List[Dict]) -> int:
         """通用导入方法"""
