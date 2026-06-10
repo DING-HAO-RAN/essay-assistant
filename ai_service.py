@@ -458,7 +458,8 @@ class AIServiceFactory:
                 - "moonshot"：月之暗面/Kimi
                 - "zhipu"：智谱AI GLM系列
                 - "qwen"：通义千问
-                - "mimo"：小米MiMo（通过硅基流动等平台）
+                - "mimo"：小米MiMo（官方平台 platform.xiaomimimo.com）
+                - "mimo-siliconflow"：小米MiMo（通过硅基流动平台）
                 - "custom"：自定义OpenAI兼容服务
             api_key: API密钥
             **kwargs: 其他可选参数
@@ -521,7 +522,16 @@ class AIServiceFactory:
             )
 
         elif provider == "mimo":
-            # 小米MiMo服务（通过硅基流动等平台调用，兼容OpenAI格式）
+            # 小米MiMo原生API服务（兼容OpenAI格式）
+            # 官方平台：https://platform.xiaomimimo.com
+            return OpenAIService(
+                api_key=api_key,
+                base_url=kwargs.get("base_url", "https://api.xiaomimimo.com/v1"),
+                model=kwargs.get("model", "mimo-7b")
+            )
+
+        elif provider == "mimo-siliconflow":
+            # 小米MiMo服务（通过硅基流动平台调用，兼容OpenAI格式）
             # 支持token-plan计费模式
             return OpenAIService(
                 api_key=api_key,
@@ -588,7 +598,13 @@ PROVIDER_CONFIGS = {
         "default_model": "qwen-turbo"
     },
     "mimo": {
-        "name": "小米MiMo (token-plan)",
+        "name": "小米MiMo (官方)",
+        "base_url": "https://api.xiaomimimo.com/v1",
+        "models": ["mimo-7b", "mimo-7b-chat"],
+        "default_model": "mimo-7b"
+    },
+    "mimo-siliconflow": {
+        "name": "小米MiMo (硅基流动)",
         "base_url": "https://api.siliconflow.cn/v1",
         "models": ["MiMo-7B-RL", "MiMo-7B-Base"],
         "default_model": "MiMo-7B-RL"
