@@ -18,16 +18,27 @@ async function loadDbStats() {
     } catch(e) { console.error(e); }
 }
 
-function switchDbTab(tab) {
-    document.querySelectorAll('[id^="db-tab-"]').forEach(function(el) { el.style.display='none'; });
-    document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+function switchDbTab(tab, clickedElement) {
+    // 隐藏所有标签页内容
+    document.querySelectorAll('[id^="db-tab-"]').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    // 移除所有标签的active状态
+    document.querySelectorAll('.tab').forEach(function(el) {
+        el.classList.remove('active');
+    });
+    // 显示选中的标签页
     var t = document.getElementById('db-tab-' + tab);
-    if(t) t.style.display='block';
-    if(event && event.target) event.target.classList.add('active');
-    if(tab==='topics') loadTopics();
-    if(tab==='materials') loadMaterials();
-    if(tab==='essays') loadEssays();
-    if(tab==='standards') loadStandards();
+    if (t) t.style.display = 'block';
+    // 设置当前标签为active
+    if (clickedElement) {
+        clickedElement.classList.add('active');
+    }
+    // 加载对应数据
+    if (tab === 'topics') loadTopics();
+    if (tab === 'materials') loadMaterials();
+    if (tab === 'essays') loadEssays();
+    if (tab === 'standards') loadStandards();
 }
 
 // 作文题目管理
