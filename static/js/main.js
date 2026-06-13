@@ -681,17 +681,96 @@ function showResult(resultId, contentId, markdown) {
     var contentEl = document.getElementById(contentId);
 
     if (resultEl && contentEl) {
+        // 确保markdown是字符串
+        if (typeof markdown !== 'string') {
+            markdown = String(markdown || '');
+        }
+
         // 渲染Markdown
-        if (typeof marked !== 'undefined') {
-            contentEl.innerHTML = marked.parse(markdown);
-        } else {
-            // 简单的换行处理
-            contentEl.innerHTML = markdown.replace(/\n/g, '<br>');
+        try {
+            if (typeof marked !== 'undefined' && marked.parse) {
+                // 配置marked选项
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    sanitize: false
+                });
+                contentEl.innerHTML = marked.parse(markdown);
+            } else {
+                // 降级处理：手动转换基本Markdown语法
+                contentEl.innerHTML = simpleMarkdownRender(markdown);
+            }
+        } catch (e) {
+            console.error('Markdown渲染失败:', e);
+            contentEl.innerHTML = simpleMarkdownRender(markdown);
         }
 
         resultEl.style.display = 'block';
         resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+}
+
+/**
+ * 简单的Markdown渲染器（降级方案）
+ * 当marked.js加载失败时使用
+ * @param {string} text - Markdown文本
+ * @returns {string} HTML字符串
+ */
+function simpleMarkdownRender(text) {
+    if (!text) return '';
+
+    // 先转义HTML特殊字符
+    var html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // 标题
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // 粗体和斜体
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // 列表
+    html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+    // 引用
+    html = html.replace(/^&gt;\s*(.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // 代码块
+    html = html.replace(/```[\s\S]*?```/g, function(match) {
+        var code = match.replace(/```\w*\n?/g, '').replace(/```$/g, '');
+        return '<pre><code>' + code + '</code></pre>';
+    });
+
+    // 行内代码
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 换行
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+
+    // 包装在段落中
+    html = '<p>' + html + '</p>';
+
+    // 清理空段落
+    html = html.replace(/<p><\/p>/g, '');
+    html = html.replace(/<p>(<h[1-6]>)/g, '$1');
+    html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<ul>)/g, '$1');
+    html = html.replace(/(<\/ul>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<blockquote>)/g, '$1');
+    html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<pre>)/g, '$1');
+    html = html.replace(/(<\/pre>)<\/p>/g, '$1');
+
+    return html;
 }
 
 /**

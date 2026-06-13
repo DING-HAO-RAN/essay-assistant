@@ -8,8 +8,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Marked.js for Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Marked.js for Markdown rendering (本地优先，CDN备用) -->
+    <script src="/static/js/marked.min.js"></script>
+    <script>
+        // 如果本地加载失败，从CDN加载
+        if (typeof marked === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
 </head>
 <body>
     <!-- 顶部导航 -->
