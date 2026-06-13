@@ -885,6 +885,76 @@ class EssayWorkflow:
                 "error": str(e)
             }
 
+    # ============================================
+    # 工作流8：AI写作成文
+    # ============================================
+
+    def ai_write_essay_workflow(self, topic: str, genre: str = "议论文",
+                                 level: str = "45", wordcount: str = "800",
+                                 requirements: str = "",
+                                 db_materials: List[Dict] = None) -> Dict[str, Any]:
+        """
+        AI写作成文工作流
+
+        功能：根据题目和要求，AI直接生成一篇完整的作文
+
+        参数：
+            topic: 作文题目
+            genre: 文体类型
+            level: 目标分数（45/50/55）
+            wordcount: 字数要求
+            requirements: 补充要求
+            db_materials: 数据库中的相关素材
+        """
+        system_prompt = """你是一位资深的高中语文教师和高考满分作文写手。
+你需要根据题目要求，写出一篇高质量的高考作文。
+作文要符合高考评分标准，结构完整，语言优美，论证充分，有思想深度。
+请直接输出作文正文，不要输出任何解释或说明。"""
+
+        # 构建素材参考
+        materials_ref = ""
+        if db_materials and len(db_materials) > 0:
+            materials_ref = "\n【可用素材参考】\n"
+            for m in db_materials[:5]:
+                materials_ref += f"- {m.get('content', '')}（{m.get('source', '')}）\n"
+
+        user_prompt = f"""请写一篇高中{genre}，要求如下：
+
+【作文题目】{topic}
+【文体要求】{genre}
+【字数要求】约{wordcount}字
+【目标分数】{level}分以上
+{f'【补充要求】{requirements}' if requirements else ''}
+{materials_ref}
+
+写作要求：
+1. 立意深刻，角度新颖
+2. 结构完整，层次清晰（开头+3个主体段+结尾）
+3. 论据充实，素材典型
+4. 语言优美，有文采（善用修辞、长短句结合）
+5. 体现思辨性
+
+请直接输出作文正文（包含标题）："""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+
+        try:
+            result = self.ai.chat(messages, temperature=0.85, max_tokens=4000)
+            return {
+                "success": True,
+                "topic": topic,
+                "genre": genre,
+                "essay": result
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
 
 class WorkflowProgress:
     """

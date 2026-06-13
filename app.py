@@ -11,7 +11,7 @@ AI作文助手 - Flask后端主程序
 
 技术栈：Flask框架 + SQLite数据库
 
-作者：AI大赛参赛项目
+作者：ding-hao-ran
 ==============================================================================
 """
 
@@ -450,6 +450,49 @@ def recommend_materials():
     workflow = EssayWorkflow(service)
     result = workflow.material_recommendation_workflow(topic, angle, db_materials)
 
+    return jsonify(result)
+
+
+@app.route('/api/write', methods=['POST'])
+def ai_write_essay():
+    """
+    AI写作成文API
+
+    功能：根据题目和要求，AI直接生成一篇完整的作文
+
+    请求方式：POST
+    请求体：
+        {
+            "topic": "谈坚持",           # 作文题目
+            "genre": "议论文",           # 文体类型
+            "level": "45",              # 目标分数
+            "wordcount": "800",         # 字数要求
+            "requirements": "..."       # 补充要求（可选）
+        }
+
+    返回值：
+        成功：{"success": true, "essay": "生成的作文内容"}
+    """
+    service = get_ai_service()
+    if not service:
+        return jsonify({"success": False, "error": "请先配置AI服务"})
+
+    data = request.json
+    topic = data.get('topic', '')
+    genre = data.get('genre', '议论文')
+    level = data.get('level', '45')
+    wordcount = data.get('wordcount', '800')
+    requirements = data.get('requirements', '')
+
+    if not topic:
+        return jsonify({"success": False, "error": "请输入作文题目"})
+
+    # 从数据库获取相关素材
+    db_materials = db.search_materials(topic, limit=5)
+
+    # 执行AI写作工作流
+    workflow = EssayWorkflow(service)
+    result = workflow.ai_write_essay_workflow(topic, genre, level, wordcount, requirements, db_materials)
     return jsonify(result)
 
 

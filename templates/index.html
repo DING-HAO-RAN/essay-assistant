@@ -22,6 +22,7 @@
             <div class="nav-links">
                 <a href="#" class="nav-link active" onclick="showSection('home', this); return false;">首页</a>
                 <a href="#" class="nav-link" onclick="showSection('guide', this); return false;">创作指导</a>
+                <a href="#" class="nav-link" onclick="showSection('write', this); return false;">AI写作</a>
                 <a href="#" class="nav-link" onclick="showSection('analyze', this); return false;">作文分析</a>
                 <a href="#" class="nav-link" onclick="showSection('score', this); return false;">智能评分</a>
                 <a href="#" class="nav-link" onclick="showSection('materials', this); return false;">素材推荐</a>
@@ -51,6 +52,12 @@
                     <div class="feature-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">📝</div>
                     <h3 class="feature-title">创作指导</h3>
                     <p class="feature-desc">输入作文题目，AI为您提供写作思路、素材推荐和结构提纲，助您下笔如有神</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('write')">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">✍️</div>
+                    <h3 class="feature-title">AI写作</h3>
+                    <p class="feature-desc">输入作文题目和要求，AI直接为您生成一篇完整的高分作文范文</p>
                 </div>
 
                 <div class="feature-card" onclick="showSection('analyze')">
@@ -127,6 +134,78 @@
                         <button class="btn btn-sm btn-secondary" onclick="copyResult('guide-content')">📋 复制</button>
                     </div>
                     <div id="guide-content" class="result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI写作成文 -->
+        <section id="section-write" style="display: none;" class="fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">✍️</div>
+                    <div>
+                        <h2 class="card-title">AI写作成文</h2>
+                        <p class="card-subtitle">输入题目和要求，AI为您生成一篇完整的高分作文</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">作文题目 <span style="color: var(--danger);">*</span></label>
+                    <input type="text" class="form-input" id="write-topic" placeholder="请输入作文题目，如：谈坚持、我的梦想">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">文体类型</label>
+                        <select class="form-select" id="write-genre">
+                            <option value="议论文">议论文</option>
+                            <option value="记叙文">记叙文</option>
+                            <option value="说明文">说明文</option>
+                            <option value="散文">散文</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">目标分数</label>
+                        <select class="form-select" id="write-level">
+                            <option value="55">55分以上（优秀）</option>
+                            <option value="50">50分以上（良好）</option>
+                            <option value="45" selected>45分以上（中等偏上）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">字数要求</label>
+                    <select class="form-select" id="write-wordcount">
+                        <option value="800">800字左右</option>
+                        <option value="1000">1000字左右</option>
+                        <option value="1200">1200字左右</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">补充要求（可选）</label>
+                    <textarea class="form-textarea" id="write-requirements" rows="3" placeholder="如：请使用苏轼和李白的事例作为论据，开头用设问引入"></textarea>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="generateEssay()">
+                    <span>✍️</span> AI生成作文
+                </button>
+
+                <div id="write-loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI正在创作中，请耐心等待...</p>
+                </div>
+
+                <div id="write-result" class="result-container" style="display: none;">
+                    <div class="result-header">
+                        <h3 id="write-result-title">AI生成作文</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" onclick="copyResult('write-content')">📋 复制</button>
+                            <button class="btn btn-sm btn-primary" onclick="analyzeGeneratedEssay()">🔍 分析这篇作文</button>
+                        </div>
+                    </div>
+                    <div id="write-content" class="result-content"></div>
                 </div>
             </div>
         </section>

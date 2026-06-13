@@ -385,6 +385,88 @@ function getMaterials() {
 }
 
 // ============================================
+// AI写作成文功能
+// ============================================
+
+/**
+ * AI生成作文
+ */
+function generateEssay() {
+    var topic = document.getElementById('write-topic').value.trim();
+    var genre = document.getElementById('write-genre').value;
+    var level = document.getElementById('write-level').value;
+    var wordcount = document.getElementById('write-wordcount').value;
+    var requirements = document.getElementById('write-requirements').value.trim();
+
+    if (!topic) {
+        alert('请输入作文题目');
+        return;
+    }
+
+    var config = typeof getCurrentConfig === 'function' ? getCurrentConfig() : null;
+    if (!config) {
+        alert('请先配置AI服务');
+        showSection('config');
+        return;
+    }
+
+    showLoading('write-loading');
+    hideResult('write-result');
+
+    fetch(API_BASE + '/api/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            topic: topic,
+            genre: genre,
+            level: level,
+            wordcount: wordcount,
+            requirements: requirements
+        })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) {
+            document.getElementById('write-result-title').textContent = topic + ' - AI生成作文';
+            showResult('write-result', 'write-content', data.essay);
+        } else {
+            alert('生成失败: ' + (data.error || '未知错误'));
+        }
+    })
+    .catch(function(error) {
+        alert('请求失败: ' + error.message);
+    })
+    .finally(function() {
+        hideLoading('write-loading');
+    });
+}
+
+/**
+ * 分析AI生成的作文
+ */
+function analyzeGeneratedEssay() {
+    var topic = document.getElementById('write-topic').value.trim();
+    var contentEl = document.getElementById('write-content');
+    var content = contentEl ? contentEl.innerText : '';
+
+    if (!topic || !content) {
+        alert('请先生成作文');
+        return;
+    }
+
+    // 切换到分析页面并填入内容
+    showSection('analyze');
+    document.getElementById('analyze-title').value = topic;
+    document.getElementById('analyze-content').value = content;
+
+    // 更新字数统计
+    var countElement = document.getElementById('analyze-word-count');
+    if (countElement) {
+        countElement.textContent = content.replace(/\s/g, '').length;
+    }
+}
+
+// ============================================
 // 高考真题功能
 // ============================================
 
@@ -412,6 +494,11 @@ function renderGaokaoTopics(topics) {
     var container = document.getElementById('gaokao-topics-list');
     if (!container) return;
 
+    if (!topics || topics.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">暂无真题数据</div>';
+        return;
+    }
+
     // 按年份分组
     var grouped = {};
     for (var i = 0; i < topics.length; i++) {
@@ -430,9 +517,13 @@ function renderGaokaoTopics(topics) {
 
         for (var j = 0; j < grouped[year].length; j++) {
             var topic = grouped[year][j];
-            html += '<li style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--bg-input); border-radius: 8px; cursor: pointer;" onclick="practiceGaokaoTopic(\'' + year + '\', \'' + topic.paper + '\')">';
-            html += '<div style="font-weight: 500;">' + topic.paper + '</div>';
-            html += '<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">' + topic.topic + '</div>';
+            // 使用data属性存储参数，避免字符串转义问题
+            html += '<li class="gaokao-topic-item" ';
+            html += 'data-year="' + year + '" ';
+            html += 'data-paper="' + (topic.paper || '') + '" ';
+            html += 'style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-input); border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s;">';
+            html += '<div style="font-weight: 500;">' + (topic.paper || '') + '</div>';
+            html += '<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">' + (topic.topic || '') + '</div>';
 
             if (topic.themes && topic.themes.length > 0) {
                 html += '<div style="display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;">';
@@ -449,6 +540,23 @@ function renderGaokaoTopics(topics) {
     }
 
     container.innerHTML = html;
+
+    // 使用事件委托绑定点击事件
+    container.onclick = function(e) {
+        var target = e.target;
+        // 向上查找带有gaokao-topic-item类的元素
+        while (target && target !== container) {
+            if (target.classList && target.classList.contains('gaokao-topic-item')) {
+                var year = target.getAttribute('data-year');
+                var paper = target.getAttribute('data-paper');
+                if (year && paper) {
+                    practiceGaokaoTopic(year, paper);
+                }
+                return;
+            }
+            target = target.parentNode;
+        }
+    };
 }
 
 /**
