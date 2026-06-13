@@ -1,23 +1,28 @@
 # AI作文助手 - 智能写作辅导系统
 
+> **[English](#english-version) | 中文**
+
 ## 项目简介
 
-AI作文助手是一款基于人工智能技术的高中语文作文辅助系统，为学生提供专业的作文创作指导、智能分析、修改建议和自动评分服务。系统基于近五年高考真题和评分标准优化，帮助学生写出高分作文。
+AI作文助手是一款基于人工智能技术的高中语文作文辅助系统，为学生提供专业的作文创作指导、AI写作成文、智能分析、修改建议和自动评分服务。系统基于近五年高考真题和评分标准优化，帮助学生写出高分作文。
 
 ### 核心功能
 
 - **创作指导**：输入作文题目，获取写作思路、素材推荐和结构提纲
+- **AI写作**：输入题目和要求，AI直接生成一篇完整的高分作文 ✨新增
 - **作文分析**：多维度分析作文的结构、语言、内容、修辞等
 - **智能评分**：模拟高考评分标准，给出综合评分和详细评语
 - **素材推荐**：根据主题智能推荐名言警句、典故、事例等素材
 - **高考真题**：2020-2024年高考真题库，提供真题讲解和写作练习
+- **数据管理**：支持自定义添加题目、素材、范文、评分标准
 
 ### 技术特点
 
-- **通用AI接口**：支持OpenAI、Claude、DeepSeek、Moonshot、智谱AI、通义千问等多种服务
+- **通用AI接口**：支持OpenAI、Claude、DeepSeek、Kimi、智谱AI、通义千问、小米MiMo等8种服务
 - **高考标准优化**：基于高考评分标准和满分作文结构进行优化
-- **现代化界面**：响应式设计，支持深色主题，流畅的动画效果
+- **现代化界面**：响应式设计，深色主题，卡片式交互
 - **模块化架构**：清晰的代码结构，易于扩展和维护
+- **本地数据库**：SQLite数据库，支持数据导入导出
 
 ---
 
@@ -33,7 +38,7 @@ AI作文助手是一款基于人工智能技术的高中语文作文辅助系统
 
 ### 方式一：使用启动脚本（推荐）
 
-1. 双击 `run.bat` 文件
+1. 双击 `start.bat` 文件
 2. 脚本会自动安装依赖并启动应用
 3. 浏览器访问 `http://localhost:5000`
 
@@ -41,7 +46,7 @@ AI作文助手是一款基于人工智能技术的高中语文作文辅助系统
 
 ```bash
 # 1. 进入项目目录
-cd d:\桌面\AI大赛\essay-assistant
+cd essay-assistant
 
 # 2. 安装依赖
 pip install -r requirements.txt
@@ -55,252 +60,84 @@ python app.py
 
 ---
 
-## 详细使用指南
+## 支持的AI服务商
 
-### 第一步：配置AI服务
-
-#### 1.1 获取API Key
-
-选择以下任一服务提供商注册并获取API Key：
-
-| 服务商 | 注册网址 | 推荐模型 | 特点 | 价格 |
-|--------|----------|----------|------|------|
-| **DeepSeek** | platform.deepseek.com | deepseek-chat | 中文效果好，性价比高 | 约1元/百万token |
-| **智谱AI** | open.bigmodel.cn | glm-4-flash | 中文效果好，有免费额度 | 有免费额度 |
-| OpenAI | platform.openai.com | gpt-3.5-turbo | 效果好，通用性强 | 约7元/百万token |
-| Claude | console.anthropic.com | claude-3-sonnet | 理解能力强 | 约15元/百万token |
-| Moonshot | platform.moonshot.cn | moonshot-v1-8k | 中文效果好 | 约12元/百万token |
-| 通义千问 | dashscope.aliyun.com | qwen-turbo | 阿里出品 | 约2元/百万token |
-
-**推荐**：初学者建议使用 **DeepSeek** 或 **智谱AI**，中文效果好且价格实惠。
-
-#### 1.2 配置步骤
-
-1. 启动应用后，点击顶部导航栏的 **⚙️ 设置**
-2. 在"选择服务提供商"下拉框中选择您的服务商
-3. 在"API Key"输入框中粘贴您的API Key
-4. 在"模型选择"下拉框中选择推荐模型（一般选择默认即可）
-5. 点击 **🔗 测试连接** 按钮，确认连接成功
-6. 点击 **💾 保存配置** 按钮
-
-配置完成后，系统会显示"已连接"状态，此时即可使用所有功能。
+| 服务商 | 模型 | API地址 | 说明 |
+|--------|------|---------|------|
+| OpenAI | gpt-4.1, gpt-5, o3 | api.openai.com/v1 | 国际主流 |
+| Claude | claude-sonnet-4-6, claude-opus-4-8 | api.anthropic.com/v1 | 长文本理解 |
+| DeepSeek | deepseek-chat, deepseek-reasoner | api.deepseek.com/v1 | 性价比高 |
+| Kimi | kimi-k2, moonshot-v1-128k | api.moonshot.cn/v1 | 长上下文 |
+| 智谱AI | glm-4-plus, glm-4-flash | open.bigmodel.cn/api/paas/v4 | 清华背景 |
+| 通义千问 | qwen-max, qwen3-235b | dashscope.aliyuncs.com/.../v1 | 阿里云 |
+| **小米MiMo** | **mimo-v2.5-pro** | **mimo.mi.com/v1** | **推理能力强** |
+| 硅基流动 | DeepSeek-V3, Qwen3等 | api.siliconflow.cn/v1 | 多模型聚合 |
 
 ---
 
-### 第二步：使用各项功能
+## 功能使用指南
 
-#### 2.1 创作指导功能
+### 1. 创作指导
 
-**适用场景**：拿到作文题目后，不知道如何下笔时使用
-
-**使用步骤**：
-1. 点击顶部导航栏的 **📝 创作指导**
-2. 在"作文题目"输入框中输入题目（如：谈坚持、我的梦想、论创新）
-3. 在"文体类型"下拉框中选择文体（议论文、记叙文、说明文、散文、应用文）
-4. 点击 **✨ 生成写作指导** 按钮
-5. 等待AI生成指导（通常需要10-30秒）
-
-**输出内容**：
-- 题目解读与审题指导
+输入作文题目，AI为您提供：
+- 审题指导和立意方向
 - 3种不同角度的写作思路
-- 详细的作文结构提纲
-- 推荐的名言警句和素材
-- 高分技巧和常见失分点提醒
+- 详细的结构提纲
+- 推荐素材和名言
+- 高分技巧
 
-**使用技巧**：
-- 题目要写完整，如"谈坚持"而不是"坚持"
-- 可以参考生成的思路，选择最适合自己的角度
-- 结构提纲可以直接作为写作框架使用
+### 2. AI写作成文 ✨新增
 
-#### 2.2 作文分析功能
+输入作文题目和要求，AI直接生成一篇完整的高分作文：
+- 支持设置文体（议论文/记叙文/说明文/散文）
+- 支持设置目标分数（45/50/55分以上）
+- 支持设置字数要求（800/1000/1200字）
+- 支持补充要求（指定素材、开头方式等）
+- 生成后可一键分析作文
 
-**适用场景**：写完作文后，想要了解文章的优缺点时使用
+### 3. 作文分析
 
-**使用步骤**：
-1. 点击顶部导航栏的 **🔍 作文分析**
-2. 在"作文题目"输入框中输入作文题目
-3. 在"作文内容"文本框中粘贴或输入作文全文
-4. 选择分析方式：
-   - **🔍 分析作文**：多维度深度分析
-   - **📊 综合评价**：一次性完成分析+评分+建议
-5. 等待AI分析完成
-
-**输出内容**：
+对作文进行多维度深度分析：
 - 审题立意分析
 - 内容分析（素材、论证）
 - 结构分析（段落、层次、过渡）
 - 语言表达分析（用词、句式、文采）
 - 思辨性分析
 - 亮点与不足
-- 发展等级评估
 - 改进建议
 
-**使用技巧**：
-- 建议先使用"分析作文"了解问题
-- 然后点击"获取修改建议"获取具体改进方案
-- 字数统计会自动显示，方便检查是否达标
+### 4. 智能评分
 
-#### 2.3 智能评分功能
-
-**适用场景**：想要了解自己的作文大概能得多少分时使用
-
-**使用步骤**：
-1. 点击顶部导航栏的 **📊 智能评分**
-2. 输入作文题目和内容
-3. 选择满分分数（60分全国卷/70分部分省份/50分）
-4. 点击 **📊 开始评分** 按钮
-
-**输出内容**：
-- 基础等级评分（内容20分 + 表达20分）
-- 发展等级评分（20分）
+严格按照高考评分标准评分：
+- 基础等级（内容20分 + 表达20分）
+- 发展等级（20分）
 - 扣分项说明
 - 最终得分和等级评定
-- 详细阅卷评语
-- 各分数段对标分析
 - 提升路径建议
 
-**评分标准说明**：
-- **48-60分**：优秀作文（约5%-10%）
-- **42-47分**：良好作文（约20%-30%）
-- **36-41分**：中等作文（约40%-50%）
-- **36分以下**：较差作文（约10%-20%）
+### 5. 素材推荐
 
-**使用技巧**：
-- 评分结果仅供参考，实际高考评分可能有差异
-- 重点关注"主要问题"和"提升建议"部分
-- 可以多次修改后重新评分，观察分数变化
+根据作文主题推荐相关素材：
+- 名言警句（含出处和使用方法）
+- 历史典故（含使用示例）
+- 人物事迹（含论证角度）
+- 时事热点
 
-#### 2.4 素材推荐功能
+### 6. 高考真题练习
 
-**适用场景**：写作时需要相关素材，或者想要积累素材时使用
-
-**使用步骤**：
-1. 点击顶部导航栏的 **📚 素材推荐**
-2. 输入作文主题（如：坚持、创新、爱国、人与自然）
-3. 可选填写写作角度（如：从个人成长角度、从历史角度）
-4. 点击 **📚 推荐素材** 按钮
-
-**输出内容**：
-- 名言警句（至少5句，含出处和使用方法）
-- 古代典故（至少3个，含使用示例）
-- 现代事例（至少3个，含论证角度）
-- 时事热点（至少2个）
-- 高考真题关联
-- 素材使用技巧
-
-**使用技巧**：
-- 平时可以多积累不同主题的素材
-- 素材要理解透彻，不能死记硬背
-- 使用素材时要与论点紧密结合
-
-#### 2.5 高考真题练习功能
-
-**适用场景**：想要练习高考真题，了解高考出题规律时使用
-
-**使用步骤**：
-1. 点击顶部导航栏的 **🎯 高考真题**
-2. 选择年份（2020-2024年），或不选择随机出题
-3. 点击 **🎯 开始练习** 按钮
-4. 也可以直接点击下方的真题卡片开始练习
-
-**输出内容**：
-- 真题信息（年份、试卷、题目）
-- 题目解读和审题指导
+2020-2024年高考作文真题库：
+- 真题讲解和审题指导
 - 3种写作思路
 - 满分作文结构
 - 推荐素材
-- 评分要点
 
-**真题库包含**：
-- 2024年：全国甲卷、新课标I卷、新课标II卷
-- 2023年：全国甲卷、全国乙卷、新课标I卷、新课标II卷
-- 2022年：全国甲卷、全国乙卷、新高考I卷/II卷
-- 2021年：全国甲卷、全国乙卷、新高考I卷、新高考II卷
-- 2020年：全国I卷、全国II卷、全国III卷、新高考I卷
+### 7. 数据管理
 
-**使用技巧**：
-- 建议每周练习1-2道真题
-- 先自己审题立意，再参考AI指导
-- 可以针对薄弱的主题类型多加练习
-
----
-
-### 第三步：写作实践建议
-
-#### 写作流程建议
-
-```
-1. 审题立意（5分钟）
-   - 使用"创作指导"功能获取审题指导
-   - 确定写作角度和中心论点
-
-2. 列提纲（5分钟）
-   - 参考AI提供的结构提纲
-   - 确定各段落的论点和素材
-
-3. 写作（30-40分钟）
-   - 按照提纲写作
-   - 注意开头和结尾要精心设计
-
-4. 检查修改（5-10分钟）
-   - 检查错别字和语病
-   - 确保字数达标
-
-5. 分析改进（课后）
-   - 使用"作文分析"功能了解优缺点
-   - 使用"智能评分"功能了解分数水平
-   - 根据建议进行修改
-```
-
-#### 提分技巧
-
-1. **标题要亮眼**：使用比喻、对偶、引用等修辞
-2. **开头要精彩**：阅卷老师重点关注，决定第一印象
-3. **结构要清晰**：总分总结构最稳妥，段落分明
-4. **素材要典型**：古今结合，正反对比
-5. **结尾要有力**：总结升华，呼应开头
-6. **语言要有文采**：善用修辞，句式多变
-
----
-
-## 常见问题解答
-
-### Q1: 如何选择AI服务提供商？
-
-**推荐**：DeepSeek或智谱AI
-- 中文效果好
-- 价格实惠（有免费额度）
-- 适合学生使用
-
-### Q2: API Key安全吗？
-
-- API Key仅保存在您的本地浏览器中（localStorage）
-- 不会上传到任何服务器
-- 请勿泄露给他人
-
-### Q3: 为什么分析/评分结果与预期不同？
-
-- AI评分仅供参考，实际高考评分可能有差异
-- 不同AI模型的效果可能不同
-- 建议多次分析取平均值
-
-### Q4: 如何获得更好的效果？
-
-- 使用更高级的模型（如GPT-4、Claude）
-- 输入完整的作文内容
-- 作文题目要写完整
-
-### Q5: 支持哪些浏览器？
-
-- Chrome（推荐）
-- Edge
-- Firefox
-- Safari
-
-### Q6: 字数统计准确吗？
-
-- 字数统计为近似值，不计算空格和换行
-- 实际作文字数可能略有差异
+支持自定义管理数据库：
+- 作文题目（添加/删除/批量导入/导出）
+- 素材库（添加/删除/搜索/批量导入/导出）
+- 范文库（添加/查看/删除/批量导入/导出）
+- 评分标准（添加/删除）
 
 ---
 
@@ -309,20 +146,26 @@ python app.py
 ```
 essay-assistant/
 ├── app.py              # Flask后端主程序
-├── ai_service.py       # 通用AI服务接口（支持6种服务商）
-├── workflow.py         # 工作流引擎（6个核心工作流）
-├── gaokao_data.py      # 高考真题数据库（2020-2024年）
+├── ai_service.py       # 通用AI服务接口（支持8种服务商）
+├── workflow.py         # 工作流引擎（8个核心工作流）
+├── database.py         # SQLite数据库模块
+├── gaokao_data.py      # 高考真题数据库
+├── import_gaokao_data.py # 数据导入脚本
 ├── requirements.txt    # 依赖包列表
-├── README.md          # 项目说明文档
-├── run.bat            # 一键启动脚本
+├── start.bat           # 一键启动脚本
+├── README.md           # 项目说明文档
 ├── static/
 │   ├── css/
-│   │   └── style.css  # 现代化深色主题样式
+│   │   └── style.css   # 现代化深色主题样式
 │   └── js/
-│       └── main.js    # 前端交互逻辑
+│       ├── main.js     # 主模块（页面导航、AI功能）
+│       ├── providers.js # 供应商预设配置
+│       ├── config.js   # 配置管理模块
+│       └── db.js       # 数据库管理模块
 ├── templates/
-│   └── index.html     # 主页面模板
-└── data/              # 数据存储目录
+│   └── index.html      # 主页面模板
+└── data/
+    └── essay_assistant.db  # SQLite数据库文件
 ```
 
 ---
@@ -342,121 +185,77 @@ essay-assistant/
                           │
 ┌─────────────────────────▼───────────────────────────┐
 │                   工作流引擎层                        │
-│  EssayWorkflow (作文分析、评分、指导等工作流)          │
+│  EssayWorkflow (8个核心工作流)                        │
+│  - 创作指导 / AI写作 / 作文分析 / 修改建议            │
+│  - 智能评分 / 素材推荐 / 综合评价 / 真题练习          │
 └─────────────────────────┬───────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────┐
 │                   AI服务接口层                        │
-│  AIServiceFactory (支持OpenAI/Claude/DeepSeek等)     │
+│  AIServiceFactory (支持8种服务商)                     │
+│  OpenAI / Claude / DeepSeek / Kimi / 智谱AI /        │
+│  通义千问 / 小米MiMo / 硅基流动                       │
 └─────────────────────────┬───────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────┐
-│                   外部AI服务                          │
-│  OpenAI / Claude / DeepSeek / Moonshot / 智谱AI      │
+│                   数据存储层                          │
+│  SQLite数据库 (题目/素材/范文/评分标准)               │
 └─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 高考真题数据库
-
-系统内置了2020-2024年高考作文真题数据库，包含：
-
-### 2024年
-- 全国甲卷：坦诚交流
-- 新课标I卷：问题与答案（互联网与人工智能）
-- 新课标II卷：抵达未知之境
-
-### 2023年
-- 全国甲卷：时间的主人与仆人
-- 全国乙卷：合作共赢
-- 新课标I卷：故事的力量
-- 新课标II卷：安静一下不被打扰
-
-### 2022年
-- 全国甲卷：借用、化用与独创
-- 全国乙卷：跨越，再跨越
-- 新高考I卷/II卷：本手、妙手、俗手
-
-### 2021年
-- 全国甲卷：可为与有为
-- 全国乙卷：理想与追求
-- 新高考I卷：体育之效
-- 新高考II卷：描红与做人
-
-### 2020年
-- 全国I卷：历史人物评说（齐桓公、管仲、鲍叔）
-- 全国II卷：携手同一世界，青年共创未来
-- 全国III卷：如何为自己画好像
-- 新高考I卷：疫情中的距离与联系
-
----
-
-## 评分标准说明
-
-系统严格按照高考作文评分标准进行评分：
-
-### 基础等级（40分）
-
-#### 内容（20分）
-| 等级 | 分数 | 标准 |
-|------|------|------|
-| 一等 | 20-16 | 切合题意、中心突出、内容充实、思想健康、感情真挚 |
-| 二等 | 15-11 | 符合题意、中心明确、内容较充实、思想健康、感情真实 |
-| 三等 | 10-6 | 基本符合题意、中心基本明确、内容单薄 |
-| 四等 | 5-0 | 偏离题意、中心不明确、内容空洞 |
-
-#### 表达（20分）
-| 等级 | 分数 | 标准 |
-|------|------|------|
-| 一等 | 20-16 | 符合文体要求、结构严谨、语言流畅、字迹工整 |
-| 二等 | 15-11 | 符合文体要求、结构完整、语言通顺、字迹清楚 |
-| 三等 | 10-6 | 基本符合文体要求、结构基本完整、语言基本通顺 |
-| 四等 | 5-0 | 不符合文体要求、结构混乱、语言不通顺 |
-
-### 发展等级（20分）
-- **深刻**：透过现象深入本质、揭示事物内在关系
-- **丰富**：材料丰富、论据充实、形象丰满
-- **有文采**：用词贴切、句式灵活、善用修辞
-- **有创新**：见解新颖、材料新鲜、构思精巧
-
-### 扣分项
-- 错别字：每1个扣1分，扣满5分为止
-- 字数不足：每少50字扣1分
-- 无标题：扣2分
-
----
-
-## 参赛信息
-
-本项目为**2026年第八届全国青少年人工智能创新挑战赛**参赛作品。
-
-### 项目亮点
-
-1. **通用AI接口设计**：支持多种主流AI服务，灵活可扩展
-2. **高考标准优化**：基于高考评分标准和真题数据库优化
-3. **专业工作流引擎**：模拟教师批改流程，分析全面专业
-4. **现代化UI设计**：响应式布局，深色主题，用户体验优秀
-5. **实用性强**：切实解决高中生作文辅导需求
-
----
-
 ## 更新日志
 
-### v1.1.0 (2024-06-07)
-- 新增高考真题练习功能（2020-2024年真题）
-- 优化作文评分工作流，严格按高考标准评分
-- 优化作文生成工作流，增加满分作文结构参考
-- 新增高考真题数据库
-- 更新README文档，添加详细使用说明
+### v1.3.0 (2026-06-13)
 
-### v1.0.0 (2024-06-07)
-- 初始版本发布
-- 实现作文创作指导功能
-- 实现作文分析功能
-- 实现智能评分功能
-- 实现素材推荐功能
-- 支持6种AI服务提供商
+**新功能：**
+- ✨ 新增AI写作成文功能，输入题目直接生成完整作文
+- ✨ 支持设置文体、目标分数、字数、补充要求
+- ✨ 生成后可一键跳转分析页面
+
+**修复：**
+- 🐛 修复高考真题界面点击无响应问题
+- 🐛 修复JS文件加载顺序导致配置无法读取
+- 🐛 增加API请求超时时间至120秒
+
+### v1.2.0 (2026-06-13)
+
+**新功能：**
+- ✨ 完全仿照cc-switch重写API配置模块
+- ✨ 卡片式供应商选择界面
+- ✨ 支持自定义模型输入（input+datalist）
+- ✨ 模型芯片标签，点击快速选择
+- ✨ 新增小米MiMo官方API支持（mimo-v2.5-pro）
+
+**改进：**
+- 🔧 更新所有模型列表至2026最新版本
+- 🔧 添加清除配置按钮
+- 🔧 优化连接状态显示
+
+### v1.1.0 (2026-06-12)
+
+**新功能：**
+- ✨ 添加SQLite数据库管理系统
+- ✨ 支持作文题目、素材、范文、评分标准的增删改查
+- ✨ 支持批量导入和导出
+- ✨ 添加高考真题练习功能（2020-2024年）
+- ✨ 导入18道高考真题、36条素材、8篇范文
+
+**改进：**
+- 🔧 优化作文评分工作流，严格按高考标准评分
+- 🔧 优化作文生成工作流，增加满分作文结构参考
+
+### v1.0.0 (2026-06-11)
+
+**初始版本：**
+- ✨ 作文创作指导功能
+- ✨ 作文智能分析功能
+- ✨ 作文修改建议功能
+- ✨ 作文智能评分功能
+- ✨ 素材推荐功能
+- ✨ 支持6种AI服务提供商
+- ✨ 现代化深色主题界面
 
 ---
 
@@ -468,6 +267,115 @@ essay-assistant/
 
 ## 联系方式
 
-如有问题，请通过以下方式联系：
-- 项目Issues
-- 邮箱：[待填写]
+- GitHub: https://github.com/DING-HAO-RAN/essay-assistant
+
+---
+
+---
+
+# English Version
+
+## Overview
+
+AI Essay Assistant is an AI-powered Chinese essay writing system for high school students. It provides professional writing guidance, AI essay generation, intelligent analysis, revision suggestions, and automatic scoring based on the National College Entrance Exam (Gaokao) standards.
+
+### Core Features
+
+- **Writing Guidance**: Get writing ideas, material recommendations, and outline suggestions
+- **AI Writing**: Generate a complete high-scoring essay from a topic and requirements ✨NEW
+- **Essay Analysis**: Multi-dimensional analysis of structure, language, content, and rhetoric
+- **Smart Scoring**: Simulate Gaokao scoring standards with detailed comments
+- **Material Recommendations**: Smart recommendations of quotes, historical examples, and current events
+- **Gaokao Practice**: 2020-2024 Gaokao essay topic database with detailed guidance
+- **Data Management**: Custom management of topics, materials, essays, and scoring standards
+
+### Supported AI Providers
+
+| Provider | Models | Base URL |
+|----------|--------|----------|
+| OpenAI | gpt-4.1, gpt-5, o3 | api.openai.com/v1 |
+| Claude | claude-sonnet-4-6, claude-opus-4-8 | api.anthropic.com/v1 |
+| DeepSeek | deepseek-chat, deepseek-reasoner | api.deepseek.com/v1 |
+| Kimi | kimi-k2 | api.moonshot.cn/v1 |
+| Zhipu AI | glm-4-plus, glm-4-flash | open.bigmodel.cn/api/paas/v4 |
+| Qwen | qwen-max, qwen3-235b | dashscope.aliyuncs.com/.../v1 |
+| **Xiaomi MiMo** | **mimo-v2.5-pro** | **mimo.mi.com/v1** |
+| SiliconFlow | DeepSeek-V3, Qwen3 | api.siliconflow.cn/v1 |
+
+### Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python app.py
+
+# Open in browser
+# http://localhost:5000
+```
+
+### Configuration
+
+1. Click ⚙️ Settings in the navigation bar
+2. Select an AI provider card
+3. Enter your API Key
+4. Click "Test Connection"
+5. Click "Save Configuration"
+
+### Project Structure
+
+```
+essay-assistant/
+├── app.py              # Flask backend
+├── ai_service.py       # Universal AI service interface
+├── workflow.py         # Workflow engine (8 workflows)
+├── database.py         # SQLite database module
+├── gaokao_data.py      # Gaokao exam data
+├── static/
+│   ├── css/style.css   # Dark theme styles
+│   └── js/
+│       ├── main.js     # Main module
+│       ├── providers.js # Provider presets
+│       ├── config.js   # Config management
+│       └── db.js       # Database management
+├── templates/
+│   └── index.html      # Main page template
+└── data/
+    └── essay_assistant.db  # SQLite database
+```
+
+### Changelog
+
+#### v1.3.0 (2026-06-13)
+- NEW: AI essay generation feature
+- FIX: Gaokao page click events not responding
+- FIX: JS loading order causing config read failure
+- FIX: Increase API timeout to 120 seconds
+
+#### v1.2.0 (2026-06-13)
+- NEW: Redesigned API config UI (card-based provider selection)
+- NEW: Custom model input support
+- NEW: Xiaomi MiMo official API support (mimo-v2.5-pro)
+- UPDATE: All model lists updated to 2026 latest versions
+
+#### v1.1.0 (2026-06-12)
+- NEW: SQLite database management system
+- NEW: Gaokao practice feature (2020-2024)
+- NEW: Import 18 Gaokao topics, 36 materials, 8 sample essays
+
+#### v1.0.0 (2026-06-11)
+- Initial release
+- Writing guidance, analysis, scoring, material recommendations
+- Support for 6 AI providers
+- Modern dark theme UI
+
+---
+
+### License
+
+This project is for learning and competition use only.
+
+### Links
+
+- GitHub: https://github.com/DING-HAO-RAN/essay-assistant
