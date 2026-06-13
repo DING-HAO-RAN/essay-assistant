@@ -86,14 +86,14 @@ var PROVIDER_PRESETS = [
     {
         id: "mimo",
         name: "小米MiMo",
-        websiteUrl: "https://platform.xiaomimimo.com",
-        apiKeyUrl: "https://platform.xiaomimimo.com",
-        baseUrl: "https://api.xiaomimimo.com/v1",
-        models: ["mimo-7b", "MiMo-7B-RL"],
-        defaultModel: "mimo-7b",
+        websiteUrl: "https://mimo.mi.com",
+        apiKeyUrl: "https://mimo.mi.com",
+        baseUrl: "https://mimo.mi.com/v1",
+        models: ["mimo-v2.5-pro", "mimo-v2-flash"],
+        defaultModel: "mimo-v2.5-pro",
         icon: "📱",
         iconColor: "#ff6900",
-        description: "小米MiMo官方API",
+        description: "小米MiMo官方API，推理能力强",
         category: "cn_official"
     },
     {

@@ -523,11 +523,11 @@ class AIServiceFactory:
 
         elif provider == "mimo":
             # 小米MiMo原生API服务（兼容OpenAI格式）
-            # 官方平台：https://platform.xiaomimimo.com
+            # 官方平台：https://mimo.mi.com
             return OpenAIService(
                 api_key=api_key,
-                base_url=kwargs.get("base_url", "https://api.xiaomimimo.com/v1"),
-                model=kwargs.get("model", "mimo-7b")
+                base_url=kwargs.get("base_url", "https://mimo.mi.com/v1"),
+                model=kwargs.get("model", "mimo-v2.5-pro")
             )
 
         elif provider == "mimo-siliconflow":
@@ -599,9 +599,9 @@ PROVIDER_CONFIGS = {
     },
     "mimo": {
         "name": "小米MiMo (官方)",
-        "base_url": "https://api.xiaomimimo.com/v1",
-        "models": ["mimo-7b", "mimo-7b-chat"],
-        "default_model": "mimo-7b"
+        "base_url": "https://mimo.mi.com/v1",
+        "models": ["mimo-v2.5-pro", "mimo-v2-flash"],
+        "default_model": "mimo-v2.5-pro"
     },
     "mimo-siliconflow": {
         "name": "小米MiMo (硅基流动)",
