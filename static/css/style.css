@@ -1045,3 +1045,35 @@ body::before {
         flex-direction: column;
     }
 }
+
+/* 模型芯片标签 */
+.model-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.75rem;
+}
+
+.model-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.model-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.model-chip.default {
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
