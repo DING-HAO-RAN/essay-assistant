@@ -20,14 +20,14 @@
                 <span class="logo-text">AI作文助手</span>
             </a>
             <div class="nav-links">
-                <a href="#" class="nav-link active" onclick="showSection('home')">首页</a>
-                <a href="#" class="nav-link" onclick="showSection('guide')">创作指导</a>
-                <a href="#" class="nav-link" onclick="showSection('analyze')">作文分析</a>
-                <a href="#" class="nav-link" onclick="showSection('score')">智能评分</a>
-                <a href="#" class="nav-link" onclick="showSection('materials')">素材推荐</a>
-                <a href="#" class="nav-link" onclick="showSection('gaokao')">高考真题</a>
-                <a href="#" class="nav-link" onclick="showSection('database')">📚 数据库</a>
-                <a href="#" class="nav-link" onclick="showSection('config')">⚙️ 设置</a>
+                <a href="#" class="nav-link active" onclick="showSection('home', this); return false;">首页</a>
+                <a href="#" class="nav-link" onclick="showSection('guide', this); return false;">创作指导</a>
+                <a href="#" class="nav-link" onclick="showSection('analyze', this); return false;">作文分析</a>
+                <a href="#" class="nav-link" onclick="showSection('score', this); return false;">智能评分</a>
+                <a href="#" class="nav-link" onclick="showSection('materials', this); return false;">素材推荐</a>
+                <a href="#" class="nav-link" onclick="showSection('gaokao', this); return false;">高考真题</a>
+                <a href="#" class="nav-link" onclick="showSection('database', this); return false;">📚 数据库</a>
+                <a href="#" class="nav-link" onclick="showSection('config', this); return false;">⚙️ 设置</a>
             </div>
         </div>
     </nav>
@@ -543,6 +543,7 @@
     </div>
 
     <script src="/static/js/main.js"></script>
+    <script src="/static/js/config.js"></script>
     <script src="/static/js/db.js"></script>
 </body>
 </html>
