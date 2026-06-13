@@ -164,7 +164,7 @@ class OpenAIService(BaseAIService):
                 f"{self.base_url}/chat/completions",  # API端点
                 headers=headers,                       # 请求头
                 json=data,                             # 请求体（自动序列化为JSON）
-                timeout=60                             # 超时时间（秒）
+                timeout=120                             # 超时时间（秒）
             )
 
             # 检查响应状态码（如果不是2xx，会抛出异常）
@@ -222,7 +222,7 @@ class OpenAIService(BaseAIService):
                 headers=headers,
                 json=data,
                 stream=True,  # 流式接收
-                timeout=60
+                timeout=120
             )
             response.raise_for_status()
 
@@ -335,7 +335,7 @@ class ClaudeService(BaseAIService):
                 f"{self.base_url}/messages",
                 headers=headers,
                 json=data,
-                timeout=60
+                timeout=120
             )
             response.raise_for_status()
 
@@ -394,7 +394,7 @@ class ClaudeService(BaseAIService):
                 headers=headers,
                 json=data,
                 stream=True,
-                timeout=60
+                timeout=120
             )
             response.raise_for_status()
 
