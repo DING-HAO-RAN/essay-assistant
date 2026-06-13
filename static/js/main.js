@@ -30,14 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
  * 按顺序加载各种数据和配置
  */
 function initApp() {
-    // 加载服务提供商列表
-    if (typeof loadProviders === 'function') {
-        loadProviders();
-    }
-
-    // 检查本地存储的配置
-    if (typeof loadSavedConfig === 'function') {
-        loadSavedConfig();
+    // 初始化配置页面
+    if (typeof initConfigPage === 'function') {
+        initConfigPage();
     }
 
     // 初始化字数统计

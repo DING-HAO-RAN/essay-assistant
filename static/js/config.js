@@ -2,152 +2,252 @@
  * ============================================
  * AI服务配置管理模块
  * ============================================
- * 参考cc-switch项目的provider管理设计
+ * 完全仿照cc-switch的provider管理设计
  * 负责：
- * - 服务商列表加载和展示
- * - API配置的保存、测试、加载
+ * - 供应商卡片列表渲染
+ * - API配置表单管理
+ * - 配置保存、测试、加载
  * - 配置状态管理
  * ============================================
  */
 
 // 全局状态
 var currentConfig = null;
-var providers = [];
+var selectedProvider = null;
 
 /**
- * 加载服务商列表
- * 从后端获取支持的AI服务商列表
+ * 初始化配置页面
+ * 渲染供应商卡片列表
  */
-function loadProviders() {
-    fetch(API_BASE + '/api/providers')
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            if (data.success) {
-                providers = data.providers;
-                renderProviderSelect();
-            }
-        })
-        .catch(function(error) {
-            console.error('加载服务商列表失败:', error);
-        });
+function initConfigPage() {
+    renderProviderCards();
+    loadSavedConfig();
 }
 
 /**
- * 渲染服务商选择下拉框
+ * 渲染供应商卡片列表
+ * 仿照cc-switch的卡片式供应商选择界面
  */
-function renderProviderSelect() {
-    var select = document.getElementById('config-provider');
-    if (!select) return;
+function renderProviderCards() {
+    var container = document.getElementById('provider-cards');
+    if (!container) return;
 
-    // 清空现有选项
-    select.innerHTML = '<option value="">请选择服务商...</option>';
+    var presets = getAllProviderPresets();
+    var html = '<div class="provider-grid">';
 
-    // 添加服务商选项
-    for (var i = 0; i < providers.length; i++) {
-        var p = providers[i];
-        var option = document.createElement('option');
-        option.value = p.id;
-        option.textContent = p.name;
-        select.appendChild(option);
+    for (var i = 0; i < presets.length; i++) {
+        var p = presets[i];
+        var isSelected = selectedProvider && selectedProvider.id === p.id;
+        var isActive = currentConfig && currentConfig.provider === p.id;
+
+        html += '<div class="provider-card' + (isSelected ? ' selected' : '') + (isActive ? ' active' : '') + '" ';
+        html += 'onclick="selectProvider(\'' + p.id + '\')" ';
+        html += 'data-provider-id="' + p.id + '">';
+
+        // 图标
+        html += '<div class="provider-icon" style="background-color: ' + (p.iconColor || '#6b7280') + ';">';
+        html += '<span>' + (p.icon || '🤖') + '</span>';
+        html += '</div>';
+
+        // 名称
+        html += '<div class="provider-name">' + p.name + '</div>';
+
+        // 描述
+        html += '<div class="provider-desc">' + (p.description || '') + '</div>';
+
+        // 状态标签
+        if (isActive) {
+            html += '<div class="provider-status active">已连接</div>';
+        }
+
+        // 链接
+        if (p.websiteUrl) {
+            html += '<div class="provider-links">';
+            html += '<a href="' + p.websiteUrl + '" target="_blank" onclick="event.stopPropagation()">官网</a>';
+            if (p.apiKeyUrl) {
+                html += '<a href="' + p.apiKeyUrl + '" target="_blank" onclick="event.stopPropagation()">获取Key</a>';
+            }
+            html += '</div>';
+        }
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * 选择供应商
+ * @param {string} providerId - 供应商ID
+ */
+function selectProvider(providerId) {
+    var preset = getProviderPreset(providerId);
+    if (!preset) return;
+
+    selectedProvider = preset;
+
+    // 更新卡片选中状态
+    var cards = document.querySelectorAll('.provider-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.remove('selected');
+        if (cards[i].getAttribute('data-provider-id') === providerId) {
+            cards[i].classList.add('selected');
+        }
+    }
+
+    // 显示配置表单
+    renderConfigForm(preset);
+}
+
+/**
+ * 渲染配置表单
+ * @param {Object} preset - 供应商预设
+ */
+function renderConfigForm(preset) {
+    var formContainer = document.getElementById('config-form');
+    if (!formContainer) return;
+
+    var html = '<div class="config-form-content">';
+    html += '<h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px;">';
+    html += '<span style="font-size: 2rem;">' + (preset.icon || '🤖') + '</span>';
+    html += '<span>' + preset.name + '</span>';
+    html += '</h3>';
+
+    // API Key 输入
+    html += '<div class="form-group">';
+    html += '<label class="form-label">API Key <span style="color: var(--danger);">*</span></label>';
+    html += '<div class="input-group">';
+    html += '<input type="password" class="form-input" id="config-apikey" placeholder="请输入您的API Key">';
+    html += '<button class="btn btn-sm btn-secondary" onclick="toggleApiKeyVisibility()">👁️</button>';
+    html += '</div>';
+    if (preset.apiKeyUrl) {
+        html += '<div class="form-hint">前往 <a href="' + preset.apiKeyUrl + '" target="_blank">' + preset.name + '</a> 获取API Key</div>';
+    }
+    html += '</div>';
+
+    // API地址输入（自定义或可编辑）
+    html += '<div class="form-group">';
+    html += '<label class="form-label">API地址</label>';
+    html += '<input type="text" class="form-input" id="config-baseurl" ';
+    html += 'value="' + (preset.baseUrl || '') + '" ';
+    html += 'placeholder="请输入API地址">';
+    if (preset.isCustom) {
+        html += '<div class="form-hint">请输入完整的API地址，如 https://api.example.com/v1</div>';
+    }
+    html += '</div>';
+
+    // 模型选择
+    html += '<div class="form-group">';
+    html += '<label class="form-label">模型选择</label>';
+    if (preset.models && preset.models.length > 0) {
+        html += '<select class="form-select" id="config-model">';
+        for (var i = 0; i < preset.models.length; i++) {
+            var model = preset.models[i];
+            var isDefault = model === preset.defaultModel;
+            html += '<option value="' + model + '"' + (isDefault ? ' selected' : '') + '>';
+            html += model + (isDefault ? ' (推荐)' : '');
+            html += '</option>';
+        }
+        html += '</select>';
+    } else {
+        html += '<input type="text" class="form-input" id="config-model" placeholder="请输入模型名称">';
+    }
+    html += '</div>';
+
+    // 按钮组
+    html += '<div class="form-actions">';
+    html += '<button class="btn btn-secondary" onclick="testConfig()">';
+    html += '<span>🔗</span> 测试连接';
+    html += '</button>';
+    html += '<button class="btn btn-primary" onclick="saveConfig()">';
+    html += '<span>💾</span> 保存配置';
+    html += '</button>';
+    html += '</div>';
+
+    // 状态显示
+    html += '<div id="config-status" class="config-status" style="display: none;">';
+    html += '<div id="status-dot" class="status-dot"></div>';
+    html += '<span id="status-text">未连接</span>';
+    html += '</div>';
+
+    // 提示信息
+    html += '<div id="config-alert-box" class="alert" style="display: none; margin-top: 1rem;"></div>';
+
+    html += '</div>';
+
+    formContainer.innerHTML = html;
+    formContainer.style.display = 'block';
+
+    // 如果有保存的配置，恢复表单值
+    if (currentConfig && currentConfig.provider === preset.id) {
+        restoreFormValues();
     }
 }
 
 /**
- * 更新服务商配置
- * 当用户选择不同的服务商时，更新模型列表和默认配置
+ * 切换API Key可见性
  */
-function updateProviderConfig() {
-    var providerId = document.getElementById('config-provider').value;
-    var modelSelect = document.getElementById('config-model');
+function toggleApiKeyVisibility() {
+    var input = document.getElementById('config-apikey');
+    if (input) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+}
+
+/**
+ * 恢复表单值
+ */
+function restoreFormValues() {
+    if (!currentConfig) return;
+
+    var apiKeyInput = document.getElementById('config-apikey');
     var baseUrlInput = document.getElementById('config-baseurl');
+    var modelInput = document.getElementById('config-model');
 
-    // 清空模型列表
-    modelSelect.innerHTML = '<option value="">请选择模型</option>';
-
-    if (!providerId) {
-        baseUrlInput.value = '';
-        baseUrlInput.placeholder = '请先选择服务商';
-        return;
+    if (apiKeyInput && currentConfig.api_key) {
+        apiKeyInput.value = currentConfig.api_key;
     }
-
-    // 查找选中的服务商
-    var provider = null;
-    for (var i = 0; i < providers.length; i++) {
-        if (providers[i].id === providerId) {
-            provider = providers[i];
-            break;
-        }
+    if (baseUrlInput && currentConfig.base_url) {
+        baseUrlInput.value = currentConfig.base_url;
     }
-
-    if (provider) {
-        // 填充模型列表
-        for (var j = 0; j < provider.models.length; j++) {
-            var model = provider.models[j];
-            var option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            if (model === provider.default_model) {
-                option.selected = true;
-                option.textContent += ' (推荐)';
-            }
-            modelSelect.appendChild(option);
-        }
-
-        // 设置默认API地址提示
-        var baseUrl = getProviderBaseUrl(providerId);
-        baseUrlInput.placeholder = baseUrl ? '默认: ' + baseUrl : '请输入API地址';
-        baseUrlInput.value = '';
+    if (modelInput && currentConfig.model) {
+        modelInput.value = currentConfig.model;
     }
 }
 
 /**
- * 获取服务商的默认API地址
- * @param {string} providerId - 服务商ID
- * @returns {string} API地址
- */
-function getProviderBaseUrl(providerId) {
-    var urls = {
-        'openai': 'https://api.openai.com/v1',
-        'claude': 'https://api.anthropic.com/v1',
-        'deepseek': 'https://api.deepseek.com/v1',
-        'moonshot': 'https://api.moonshot.cn/v1',
-        'zhipu': 'https://open.bigmodel.cn/api/paas/v4',
-        'qwen': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-        'mimo': 'https://api.xiaomimimo.com/v1',
-        'mimo-siliconflow': 'https://api.siliconflow.cn/v1'
-    };
-    return urls[providerId] || '';
-}
-
-/**
- * 保存AI服务配置
- * 将配置保存到后端session和本地localStorage
+ * 保存配置
  */
 function saveConfig() {
-    var provider = document.getElementById('config-provider').value;
-    var apiKey = document.getElementById('config-apikey').value;
-    var baseUrl = document.getElementById('config-baseurl').value;
-    var model = document.getElementById('config-model').value;
-
-    // 验证必填项
-    if (!provider) {
-        showConfigAlert('请选择服务商', 'warning');
+    if (!selectedProvider) {
+        showConfigAlert('请先选择服务商', 'warning');
         return;
     }
+
+    var apiKey = document.getElementById('config-apikey').value.trim();
+    var baseUrl = document.getElementById('config-baseurl').value.trim();
+    var model = document.getElementById('config-model').value.trim();
+
+    // 验证必填项
     if (!apiKey) {
         showConfigAlert('请输入API Key', 'warning');
         return;
     }
+    if (!baseUrl) {
+        showConfigAlert('请输入API地址', 'warning');
+        return;
+    }
     if (!model) {
-        showConfigAlert('请选择模型', 'warning');
+        showConfigAlert('请选择或输入模型', 'warning');
         return;
     }
 
     // 构建配置数据
     var configData = {
-        provider: provider,
+        provider: selectedProvider.id,
         api_key: apiKey,
-        base_url: baseUrl || getProviderBaseUrl(provider),
+        base_url: baseUrl,
         model: model
     };
 
@@ -169,6 +269,9 @@ function saveConfig() {
 
             showConfigAlert('配置保存成功！', 'success');
             updateConnectionStatus(true);
+
+            // 重新渲染卡片以更新状态
+            renderProviderCards();
         } else {
             showConfigAlert('保存失败: ' + (data.error || '未知错误'), 'danger');
         }
@@ -179,20 +282,18 @@ function saveConfig() {
 }
 
 /**
- * 测试AI服务连接
- * 发送测试请求验证配置是否正确
+ * 测试连接
  */
 function testConfig() {
-    var provider = document.getElementById('config-provider').value;
-    var apiKey = document.getElementById('config-apikey').value;
-    var baseUrl = document.getElementById('config-baseurl').value;
-    var model = document.getElementById('config-model').value;
-
-    // 验证必填项
-    if (!provider) {
+    if (!selectedProvider) {
         showConfigAlert('请先选择服务商', 'warning');
         return;
     }
+
+    var apiKey = document.getElementById('config-apikey').value.trim();
+    var baseUrl = document.getElementById('config-baseurl').value.trim();
+    var model = document.getElementById('config-model').value.trim();
+
     if (!apiKey) {
         showConfigAlert('请先输入API Key', 'warning');
         return;
@@ -200,10 +301,10 @@ function testConfig() {
 
     // 构建测试数据
     var testData = {
-        provider: provider,
+        provider: selectedProvider.id,
         api_key: apiKey,
-        base_url: baseUrl || getProviderBaseUrl(provider),
-        model: model || ''
+        base_url: baseUrl || selectedProvider.baseUrl,
+        model: model || selectedProvider.defaultModel
     };
 
     // 显示测试中状态
@@ -218,22 +319,21 @@ function testConfig() {
     .then(function(response) { return response.json(); })
     .then(function(data) {
         if (data.success) {
-            showConfigAlert('连接测试成功！AI回复: ' + data.response, 'success');
+            showConfigAlert('✅ 连接测试成功！AI回复: ' + data.response, 'success');
             updateConnectionStatus(true);
         } else {
-            showConfigAlert('连接测试失败: ' + (data.error || '未知错误'), 'danger');
+            showConfigAlert('❌ 连接测试失败: ' + (data.error || '未知错误'), 'danger');
             updateConnectionStatus(false);
         }
     })
     .catch(function(error) {
-        showConfigAlert('测试失败: ' + error.message, 'danger');
+        showConfigAlert('❌ 测试失败: ' + error.message, 'danger');
         updateConnectionStatus(false);
     });
 }
 
 /**
  * 加载保存的配置
- * 从localStorage加载之前保存的配置
  */
 function loadSavedConfig() {
     var saved = localStorage.getItem('ai_config');
@@ -242,34 +342,9 @@ function loadSavedConfig() {
     try {
         currentConfig = JSON.parse(saved);
 
-        // 恢复表单状态
-        var providerSelect = document.getElementById('config-provider');
-        if (providerSelect) {
-            providerSelect.value = currentConfig.provider;
-            updateProviderConfig();
-
-            // 延迟设置模型，等待模型列表加载
-            setTimeout(function() {
-                var modelSelect = document.getElementById('config-model');
-                if (modelSelect && currentConfig.model) {
-                    modelSelect.value = currentConfig.model;
-                }
-            }, 100);
-        }
-
-        // 恢复API Key
-        var apiKeyInput = document.getElementById('config-apikey');
-        if (apiKeyInput && currentConfig.api_key) {
-            apiKeyInput.value = currentConfig.api_key;
-        }
-
-        // 恢复自定义API地址
-        var baseUrlInput = document.getElementById('config-baseurl');
-        if (baseUrlInput && currentConfig.base_url) {
-            var defaultUrl = getProviderBaseUrl(currentConfig.provider);
-            if (currentConfig.base_url !== defaultUrl) {
-                baseUrlInput.value = currentConfig.base_url;
-            }
+        // 选中对应的供应商
+        if (currentConfig.provider) {
+            selectProvider(currentConfig.provider);
         }
 
         updateConnectionStatus(true);
@@ -293,25 +368,12 @@ function updateConnectionStatus(connected) {
 
     if (connected && currentConfig) {
         statusDot.className = 'status-dot connected';
-        statusText.textContent = '已连接 (' + getProviderName(currentConfig.provider) + ')';
+        var preset = getProviderPreset(currentConfig.provider);
+        statusText.textContent = '已连接 (' + (preset ? preset.name : currentConfig.provider) + ')';
     } else {
         statusDot.className = 'status-dot';
         statusText.textContent = '未连接';
     }
-}
-
-/**
- * 获取服务商显示名称
- * @param {string} providerId - 服务商ID
- * @returns {string} 服务商名称
- */
-function getProviderName(providerId) {
-    for (var i = 0; i < providers.length; i++) {
-        if (providers[i].id === providerId) {
-            return providers[i].name;
-        }
-    }
-    return providerId;
 }
 
 /**
@@ -337,7 +399,6 @@ function showConfigAlert(message, type) {
 
 /**
  * 检查是否已配置AI服务
- * 用于其他页面检查配置状态
  */
 function checkConfigAlert() {
     var alert = document.getElementById('config-alert');
@@ -348,9 +409,37 @@ function checkConfigAlert() {
 
 /**
  * 获取当前配置
- * 供其他模块调用
  * @returns {Object|null} 当前配置对象
  */
 function getCurrentConfig() {
     return currentConfig;
+}
+
+/**
+ * 获取当前配置（异步版本，兼容旧代码）
+ */
+function loadProviders() {
+    // 兼容旧代码，实际不需要做任何事情
+    // 因为供应商列表现在是静态的
+}
+
+/**
+ * 更新供应商配置（兼容旧代码）
+ */
+function updateProviderConfig() {
+    // 兼容旧代码
+}
+
+/**
+ * 保存配置（兼容旧代码）
+ */
+function saveConfigLegacy() {
+    saveConfig();
+}
+
+/**
+ * 测试配置（兼容旧代码）
+ */
+function testConfigLegacy() {
+    testConfig();
 }
