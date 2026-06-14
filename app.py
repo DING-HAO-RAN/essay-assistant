@@ -88,6 +88,34 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/api/test-display', methods=['GET'])
+def test_display():
+    """测试显示功能的API端点"""
+    test_text = """## 测试标题
+
+这是一段**测试文本**，用于验证显示功能是否正常。
+
+### 列表测试
+- 项目一
+- 项目二
+- 项目三
+
+### 引用测试
+> 这是一段引用文本
+
+### 代码测试
+```python
+print("Hello World")
+```
+
+**显示测试完成！**"""
+
+    return jsonify({
+        "success": True,
+        "text": test_text
+    })
+
+
 # ============================================
 # AI服务配置API
 # ============================================

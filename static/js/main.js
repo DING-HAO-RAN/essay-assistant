@@ -487,6 +487,36 @@ function loadGaokaoTopics() {
 }
 
 /**
+ * 测试显示功能
+ * 用于验证结果是否能正常显示
+ */
+function testDisplay() {
+    console.log('[testDisplay] 开始测试');
+
+    // 先尝试API测试
+    fetch(API_BASE + '/api/test-display')
+        .then(function(response) {
+            console.log('[testDisplay] 收到响应:', response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            console.log('[testDisplay] 数据:', data);
+            if (data.success) {
+                showResult('analyze-result', 'analyze-content', data.text);
+                console.log('[testDisplay] 显示完成');
+            } else {
+                alert('测试失败: ' + data.error);
+            }
+        })
+        .catch(function(error) {
+            console.error('[testDisplay] 错误:', error);
+            // 如果API失败，使用本地测试数据
+            var testText = "## 测试标题\n\n这是**测试内容**。\n\n- 项目1\n- 项目2\n\n> 引用文本\n\n**显示测试完成！**";
+            showResult('analyze-result', 'analyze-content', testText);
+        });
+}
+
+/**
  * 渲染高考真题列表
  * @param {Array} topics - 真题数组
  */
@@ -671,96 +701,163 @@ function hideLoading(id) {
 }
 
 /**
- * 显示结果
+ * 显示结果 - 完全重写版本
+ * 使用textarea显示原始文本，确保内容可见
  * @param {string} resultId - 结果容器ID
  * @param {string} contentId - 内容元素ID
- * @param {string} markdown - Markdown内容
+ * @param {string} text - 文本内容
  */
-function showResult(resultId, contentId, markdown) {
+function showResult(resultId, contentId, text) {
+    console.log('[showResult] 开始显示结果');
+    console.log('[showResult] resultId:', resultId);
+    console.log('[showResult] contentId:', contentId);
+    console.log('[showResult] text类型:', typeof text);
+    console.log('[showResult] text长度:', text ? text.length : 0);
+    console.log('[showResult] text前100字:', text ? text.substring(0, 100) : 'null');
+
     var resultEl = document.getElementById(resultId);
     var contentEl = document.getElementById(contentId);
 
-    if (resultEl && contentEl) {
-        // 确保markdown是字符串
-        if (typeof markdown !== 'string') {
-            markdown = String(markdown || '');
-        }
-
-        // 渲染Markdown
-        try {
-            if (typeof marked !== 'undefined' && marked.parse) {
-                // 配置marked选项
-                marked.setOptions({
-                    breaks: true,
-                    gfm: true,
-                    sanitize: false
-                });
-                contentEl.innerHTML = marked.parse(markdown);
-            } else {
-                // 降级处理：手动转换基本Markdown语法
-                contentEl.innerHTML = simpleMarkdownRender(markdown);
-            }
-        } catch (e) {
-            console.error('Markdown渲染失败:', e);
-            contentEl.innerHTML = simpleMarkdownRender(markdown);
-        }
-
-        resultEl.style.display = 'block';
-        resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!resultEl) {
+        console.error('[showResult] 找不到结果容器:', resultId);
+        return;
     }
+    if (!contentEl) {
+        console.error('[showResult] 找不到内容元素:', contentId);
+        return;
+    }
+
+    // 确保text是字符串
+    if (typeof text !== 'string') {
+        console.warn('[showResult] text不是字符串，尝试转换');
+        text = String(text || '');
+    }
+
+    if (text.length === 0) {
+        console.warn('[showResult] text为空');
+        contentEl.innerHTML = '<div class="alert alert-warning">未获取到内容</div>';
+        resultEl.style.display = 'block';
+        return;
+    }
+
+    // 渲染内容
+    var html = renderMarkdown(text);
+    console.log('[showResult] 渲染后HTML长度:', html.length);
+
+    // 设置内容
+    contentEl.innerHTML = html;
+
+    // 验证内容是否成功设置
+    console.log('[showResult] contentEl.innerText长度:', contentEl.innerText.length);
+    console.log('[showResult] contentEl.innerText前100字:', contentEl.innerText.substring(0, 100));
+
+    // 如果innerText为空但innerHTML不为空，说明渲染有问题
+    if (contentEl.innerText.trim().length === 0 && html.length > 0) {
+        console.warn('[showResult] innerText为空但innerHTML不为空，使用纯文本模式');
+        contentEl.textContent = text;
+    }
+
+    // 显示结果容器
+    resultEl.style.display = 'block';
+
+    // 滚动到结果
+    try {
+        resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch(e) {
+        resultEl.scrollIntoView(true);
+    }
+
+    console.log('[showResult] 显示完成');
 }
 
 /**
- * 简单的Markdown渲染器（降级方案）
- * 当marked.js加载失败时使用
+ * 渲染Markdown内容
+ * 支持多种降级方案
  * @param {string} text - Markdown文本
  * @returns {string} HTML字符串
+ */
+function renderMarkdown(text) {
+    if (!text) return '';
+
+    // 方案1：使用marked.js
+    try {
+        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+            var result = marked.parse(text);
+            if (result && result.length > 0) {
+                return result;
+            }
+        }
+    } catch(e) {
+        console.warn('[renderMarkdown] marked.js渲染失败:', e);
+    }
+
+    // 方案2：使用简单渲染器
+    try {
+        return simpleMarkdownRender(text);
+    } catch(e) {
+        console.warn('[renderMarkdown] 简单渲染器失败:', e);
+    }
+
+    // 方案3：纯文本，保留换行
+    return '<pre style="white-space: pre-wrap; word-wrap: break-word;">' + escapeHtml(text) + '</pre>';
+}
+
+/**
+ * 简单的Markdown渲染器
  */
 function simpleMarkdownRender(text) {
     if (!text) return '';
 
-    // 先转义HTML特殊字符
-    var html = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    // 转义HTML特殊字符（但保留Markdown语法）
+    var html = text;
 
-    // 标题
+    // 处理代码块（先处理，避免被其他规则影响）
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        return '<pre><code>' + escapeHtml(code) + '</code></pre>';
+    });
+
+    // 处理行内代码
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 处理标题
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
     html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
 
-    // 粗体和斜体
-    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    // 处理粗体和斜体
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-    // 列表
+    // 处理有序列表
+    html = html.replace(/^\s*(\d+)\.\s+(.+)$/gm, '<li>$2</li>');
+
+    // 处理无序列表
     html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-    html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
 
-    // 引用
-    html = html.replace(/^&gt;\s*(.+)$/gm, '<blockquote>$1</blockquote>');
+    // 将连续的li包装为ul
+    html = html.replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul>$1</ul>');
 
-    // 代码块
-    html = html.replace(/```[\s\S]*?```/g, function(match) {
-        var code = match.replace(/```\w*\n?/g, '').replace(/```$/g, '');
-        return '<pre><code>' + code + '</code></pre>';
-    });
+    // 处理引用
+    html = html.replace(/^>\s*(.+)$/gm, '<blockquote>$1</blockquote>');
 
-    // 行内代码
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 处理分隔线
+    html = html.replace(/^---$/gm, '<hr>');
 
-    // 换行
+    // 处理段落和换行
+    // 先将连续两个换行符转为段落分隔
     html = html.replace(/\n\n/g, '</p><p>');
+    // 单个换行符转为<br>
     html = html.replace(/\n/g, '<br>');
 
     // 包装在段落中
-    html = '<p>' + html + '</p>';
+    if (html.indexOf('<h') !== 0 && html.indexOf('<ul') !== 0 &&
+        html.indexOf('<pre') !== 0 && html.indexOf('<blockquote') !== 0) {
+        html = '<p>' + html + '</p>';
+    }
 
-    // 清理空段落
-    html = html.replace(/<p><\/p>/g, '');
+    // 清理
+    html = html.replace(/<p>\s*<\/p>/g, '');
     html = html.replace(/<p>(<h[1-6]>)/g, '$1');
     html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
     html = html.replace(/<p>(<ul>)/g, '$1');
@@ -769,8 +866,23 @@ function simpleMarkdownRender(text) {
     html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
     html = html.replace(/<p>(<pre>)/g, '$1');
     html = html.replace(/(<\/pre>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<hr>)/g, '$1');
+    html = html.replace(/(<hr>)<\/p>/g, '$1');
 
     return html;
+}
+
+/**
+ * 转义HTML特殊字符
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 /**
